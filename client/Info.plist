@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleIdentifier</key><string>__BUNDLE_ID__</string>
+	<key>CFBundleName</key><string>ccsend</string>
+	<key>CFBundleDisplayName</key><string>ccsend</string>
+	<key>CFBundleExecutable</key><string>ccsend</string>
+	<key>CFBundlePackageType</key><string>APPL</string>
+	<key>CFBundleShortVersionString</key><string>0.1.0</string>
+	<key>CFBundleVersion</key><string>1</string>
+	<key>LSMinimumSystemVersion</key><string>15.0</string>
+	<key>LSUIElement</key><true/>
+	<key>NSDesktopFolderUsageDescription</key><string>ccsend reads the files you choose to send to your SSH hosts.</string>
+	<key>NSDownloadsFolderUsageDescription</key><string>ccsend reads the files you choose to send to your SSH hosts.</string>
+	<key>NSDocumentsFolderUsageDescription</key><string>ccsend reads the files you choose to send to your SSH hosts.</string>
+</dict>
+</plist>

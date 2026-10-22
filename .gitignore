@@ -1,0 +1,7 @@
+# build output
+client/.build/
+client/build/
+# generated from server/remote.py by make
+client/Sources/ccsend/RemoteScript.swift
+__pycache__/
+.DS_Store

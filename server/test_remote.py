@@ -1,0 +1,203 @@
+"""Tests for remote.py, run the way the client runs it (bootstrap + base64 args).
+
+    python3 server/test_remote.py          # on the Mac: everything but discover
+    python3 test_remote.py                 # on a Linux host: discover too
+
+Each test gets its own fake HOME, so nothing outside a temp dir is touched.
+"""
+import base64
+import io
+import json
+import os
+import subprocess
+import sys
+import tarfile
+import tempfile
+import unittest
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+
+
+def read(path):
+    with open(path, "rb") as f:
+        return f.read()
+
+
+SCRIPT = read(os.path.join(HERE, "remote.py"))
+# Must stay identical to the client's bootstrap (client/Sources/ccsend/Remote.swift).
+BOOTSTRAP = "import base64,sys;exec(compile(base64.b64decode(sys.argv.pop(1)),'remote.py','exec'))"
+
+
+def b64(b):
+    return base64.b64encode(b).decode()
+
+
+def tar_bytes(entries):
+    """entries: (name, kind, payload) with kind file|dir|sym|hard|fifo."""
+    buf = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode="w", format=tarfile.PAX_FORMAT) as t:
+        for name, kind, payload in entries:
+            ti = tarfile.TarInfo(name)
+            if kind == "file":
+                ti.size = len(payload)
+                t.addfile(ti, io.BytesIO(payload))
+                continue
+            ti.type = {"dir": tarfile.DIRTYPE, "sym": tarfile.SYMTYPE,
+                       "hard": tarfile.LNKTYPE, "fifo": tarfile.FIFOTYPE}[kind]
+            if kind == "dir":
+                ti.mode = 0o755
+            if kind in ("sym", "hard"):
+                ti.linkname = payload
+            t.addfile(ti)
+    return buf.getvalue()
+
+
+class Remote(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.home = os.path.realpath(self.tmp.name)
+        os.mkdir(os.path.join(self.home, "dest"))
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def run_remote(self, req, stdin=b""):
+        env = dict(os.environ, HOME=self.home)
+        req = dict(req, id="selftest") if isinstance(req, dict) and req else req
+        p = subprocess.run([sys.executable, "-c", BOOTSTRAP, b64(SCRIPT), b64(json.dumps(req).encode())],
+                           input=stdin, capture_output=True, env=env, timeout=30)
+        out = json.loads(p.stdout.decode())
+        self.assertEqual(p.returncode == 0, out["ok"], p.stderr.decode())
+        return out
+
+    def upload(self, entries, tops, dest="~/dest", roots=("~",), create=False):
+        return self.run_remote({"cmd": "upload", "dir": dest, "roots": list(roots), "create": create,
+                                "tops": tops}, tar_bytes(entries))
+
+    def p(self, *parts):
+        return os.path.join(self.home, *parts)
+
+    # ------------------------------------------------------------ requests
+
+    def test_bad_requests(self):
+        for req in ({}, {"cmd": "rm"}, {"cmd": "upload"}, {"cmd": "list", "dir": "~", "roots": []}):
+            self.assertFalse(self.run_remote(req)["ok"], req)
+
+    def test_resolve(self):
+        out = self.run_remote({"cmd": "resolve", "path": "~/dest", "roots": ["~"]})
+        self.assertEqual(out["path"], self.p("dest"))
+        self.assertTrue(out["exists"])
+        for bad in ("/etc", "~/../..", "relative/path", "~/dest/../../x"):
+            self.assertFalse(self.run_remote({"cmd": "resolve", "path": bad, "roots": ["~"]})["ok"], bad)
+
+    def test_resolve_symlink_out_of_root(self):
+        os.symlink("/etc", self.p("dest", "etc"))
+        self.assertFalse(self.run_remote({"cmd": "resolve", "path": "~/dest/etc", "roots": ["~"]})["ok"])
+
+    def test_narrow_root(self):
+        os.mkdir(self.p("other"))
+        out = self.run_remote({"cmd": "resolve", "path": "~/other", "roots": ["~/dest"]})
+        self.assertFalse(out["ok"])
+        # A sibling sharing the prefix must not count as inside.
+        os.mkdir(self.p("dest2"))
+        self.assertFalse(self.run_remote({"cmd": "resolve", "path": "~/dest2", "roots": ["~/dest"]})["ok"])
+
+    # ------------------------------------------------------------ list
+
+    def test_list(self):
+        for n in ("web", "workers", ".hidden", "readme.md"):
+            (os.mkdir if "." not in n[1:] else lambda p: open(p, "w").close())(self.p("dest", n))
+        out = self.run_remote({"cmd": "list", "dir": "~/dest", "prefix": "w", "roots": ["~"]})
+        self.assertEqual([e["name"] for e in out["entries"]], ["web", "workers"])
+        self.assertTrue(all(e["dir"] for e in out["entries"]))
+        out = self.run_remote({"cmd": "list", "dir": "~/dest", "prefix": "", "roots": ["~"]})
+        self.assertNotIn(".hidden", [e["name"] for e in out["entries"]])
+        out = self.run_remote({"cmd": "list", "dir": "~/dest", "prefix": ".", "roots": ["~"]})
+        self.assertEqual([e["name"] for e in out["entries"]], [".hidden"])
+        self.assertFalse(self.run_remote({"cmd": "list", "dir": "/etc", "prefix": "", "roots": ["~"]})["ok"])
+        self.assertFalse(self.run_remote({"cmd": "list", "dir": "~", "prefix": "../", "roots": ["~"]})["ok"])
+
+    # ------------------------------------------------------------ upload
+
+    def test_upload_file_and_collisions(self):
+        out = self.upload([("shot 1.png", "file", b"png")], ["shot 1.png"])
+        self.assertEqual(out["written"], [{"sent": "shot 1.png", "name": "shot 1.png"}])
+        out = self.upload([("shot 1.png", "file", b"two")], ["shot 1.png"])
+        self.assertEqual(out["written"][0]["name"], "shot 1-1.png")
+        self.assertEqual(read(self.p("dest", "shot 1.png")), b"png")
+        self.assertEqual(read(self.p("dest", "shot 1-1.png")), b"two")
+
+    def test_upload_folder(self):
+        entries = [("web", "dir", None), ("web/src", "dir", None), ("web/src/a.ts", "file", b"a"),
+                   ("web/link", "sym", "../../outside"), ("web/empty", "dir", None)]
+        out = self.upload(entries, ["web"])
+        self.assertEqual(out["written"][0]["name"], "web")
+        self.assertEqual(read(self.p("dest", "web", "src", "a.ts")), b"a")
+        self.assertEqual(os.readlink(self.p("dest", "web", "link")), "../../outside")
+        self.assertTrue(os.path.isdir(self.p("dest", "web", "empty")))
+        out = self.upload(entries, ["web"])
+        self.assertEqual(out["written"][0]["name"], "web-1")
+
+    def test_upload_unicode_and_long_names(self):
+        # Over the 100-byte ustar limit (needs pax), under the 255-byte name limit.
+        name = "Screenshot 2026-01-01 at 12.00.00 " + "äöü" * 20 + ".png"
+        out = self.upload([(name, "file", b"x")], [name])
+        self.assertEqual(out["written"][0]["name"], name)
+        # Too long for the filesystem: refused cleanly, nothing left behind.
+        name = "x" * 300
+        self.assertFalse(self.upload([(name, "file", b"x")], [name])["ok"])
+        self.assertEqual(os.listdir(self.p("dest")), ["Screenshot 2026-01-01 at 12.00.00 " + "äöü" * 20 + ".png"])
+
+    def test_upload_create_default_location(self):
+        self.assertFalse(self.upload([("a", "file", b"x")], ["a"], dest="~/inbox")["ok"])
+        out = self.upload([("a", "file", b"x")], ["a"], dest="~/inbox", create=True)
+        self.assertEqual(out["dir"], self.p("inbox"))
+
+    def test_upload_refusals(self):
+        cases = {
+            "outside root": ([("a", "file", b"x")], ["a"], "/tmp"),
+            "dotdot member": ([("../a", "file", b"x")], [".."], "~/dest"),
+            "absolute member": ([("/a", "file", b"x")], ["a"], "~/dest"),
+            "unexpected top": ([("b", "file", b"x")], ["a"], "~/dest"),
+            "hard link": ([("a", "hard", "/etc/passwd")], ["a"], "~/dest"),
+            "fifo": ([("a", "fifo", None)], ["a"], "~/dest"),
+            "missing top": ([("a", "file", b"x")], ["a", "b"], "~/dest"),
+            "slash in top": ([("a/b", "file", b"x")], ["a/b"], "~/dest"),
+        }
+        for label, (entries, tops, dest) in cases.items():
+            out = self.upload(entries, tops, dest=dest)
+            self.assertFalse(out["ok"], label)
+        self.assertEqual(os.listdir(self.p("dest")), [], "refused uploads must leave nothing behind")
+
+    def test_upload_symlinked_dir_escape(self):
+        # A symlink inside the folder, then a file "through" it: must not write outside.
+        os.mkdir(self.p("victim"))
+        entries = [("web", "dir", None), ("web/esc", "sym", self.p("victim")), ("web/esc/pwned", "file", b"x")]
+        self.assertFalse(self.upload(entries, ["web"])["ok"])
+        self.assertEqual(os.listdir(self.p("victim")), [])
+        self.assertEqual(os.listdir(self.p("dest")), [])
+
+    def test_upload_does_not_follow_existing_symlink_dest(self):
+        os.symlink("/etc", self.p("dest", "etc"))
+        self.assertFalse(self.upload([("a", "file", b"x")], ["a"], dest="~/dest/etc")["ok"])
+
+    def test_upload_truncated_stream_rolls_back(self):
+        data = tar_bytes([("web", "dir", None), ("web/a", "file", b"x" * 100000)])
+        out = self.run_remote({"cmd": "upload", "dir": "~/dest", "roots": ["~"], "tops": ["web"]}, data[:20000])
+        self.assertFalse(out["ok"])
+        self.assertEqual(os.listdir(self.p("dest")), [])
+
+    # ------------------------------------------------------------ discover
+
+    @unittest.skipUnless(sys.platform.startswith("linux"), "discover needs /proc")
+    def test_discover(self):
+        out = self.run_remote({"cmd": "discover"})
+        self.assertTrue(out["ok"])
+        self.assertEqual(out["home"], self.home)
+        for s in out["sessions"]:
+            self.assertIn(s["kind"], ("claude", "shell"))
+            self.assertTrue(os.path.isabs(s["cwd"]))
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=1)
