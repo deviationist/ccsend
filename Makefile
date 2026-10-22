@@ -5,6 +5,7 @@
 #   make install    install the app, link the CLI, create the Quick Actions
 
 APP      := client/build/ccsend.app
+LSREGISTER := /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
 BIN      := $(APP)/Contents/MacOS/ccsend
 GEN      := client/Sources/ccsend/RemoteScript.swift
 DEST     := $(HOME)/Applications/ccsend.app
@@ -48,6 +49,8 @@ install: $(APP)
 	$(HOME)/.local/bin/ccsend install
 	-pluginkit -a $(DEST)/Contents/PlugIns/ccsendFinder.appex
 	-pluginkit -e use -i $(BUNDLE_ID).finder
+	# Only the installed copy should handle ccsend:// links and provide the extension.
+	-$(LSREGISTER) -u $(CURDIR)/$(APP)
 
 clean:
 	rm -rf client/.build client/build $(GEN)

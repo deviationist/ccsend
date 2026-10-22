@@ -228,7 +228,7 @@ final class ImportModel: ObservableObject {
                 let paths = imp.localPaths
                 DispatchQueue.main.async {
                     self.imported = paths
-                    LastImport.set(self.host.name, d)
+                    if self.host.importStart == "last" { LastImport.set(self.host.name, d) }
                     self.progress = 1
                     self.phase = .done
                     // The Desktop already shows them; elsewhere, open Finder on the imported items.
