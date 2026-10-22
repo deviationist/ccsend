@@ -43,6 +43,9 @@ enum SelfTest {
         rejects(host + "claude_sessions = \"yes\"\n", "wrong type")
         rejects("[ui]\nmenu = \"tabs\"\n" + host, "bad enum")
         rejects("[ui]\nrefresh_seconds = 1\n" + host, "refresh too fast")
+        rejects(host + "inject = \"yes\"\n", "bad inject")
+        expect((try? Config.parse(host))?.hosts[0].inject == .off, "inject is off unless enabled")
+        expect((try? Config.parse(host + "inject = \"type\"\n"))?.hosts[0].inject == .type, "inject type")
         expect((try? Config.parse("[ui]\nrefresh_seconds = 0\n" + host))?.refreshSeconds == 0, "refresh off")
         rejects(host + "label = \"a\nb\"\n", "unterminated string")
 

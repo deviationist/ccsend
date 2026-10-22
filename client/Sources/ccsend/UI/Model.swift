@@ -22,7 +22,7 @@ final class SendModel: ObservableObject {
     let config: Config
     let files: [String]
 
-    @Published var host: HostConfig { didSet { if oldValue.name != host.name { connect() } } }
+    @Published var host: HostConfig { didSet { if oldValue.name != host.name { injectOn = true; connect() } } }
     @Published var phase = Phase.connecting
     @Published var discovery: Remote.Discovery?
     @Published var destinations: [Destination] = []
@@ -43,6 +43,8 @@ final class SendModel: ObservableObject {
     @Published var overLimitConfirmed = false
     @Published var progress: Double = 0
     @Published var result: SendResult?
+    @Published var injectOn = true          // the per-send checkbox; only shown when the host opted in
+    @Published var doneMessage = ""
 
     private var ssh: SSH?
     private var userChose = false      // the user picked a destination: refreshes never change it
@@ -258,6 +260,19 @@ final class SendModel: ObservableObject {
 
     // MARK: send
 
+    /// The selected destination, if it is a Claude session.
+    var selectedClaude: Remote.Session? {
+        guard let id = selected, let d = destinations.first(where: { $0.id == id }),
+              case .session(let s) = d.kind, s.kind == .claude else { return nil }
+        return s
+    }
+
+    /// Where the path will be typed after the upload, if anywhere.
+    var injectTarget: Remote.Session? {
+        guard host.inject != .off, injectOn, let s = selectedClaude, !s.pane.isEmpty else { return nil }
+        return s
+    }
+
     var canSend: Bool {
         phase == .ready && plan != nil && selected != nil && (selected != "path" || path.count > 1)
     }
@@ -275,6 +290,7 @@ final class SendModel: ObservableObject {
         phase = .sending
         sendError = nil
         let total = max(Double(plan.bytes), 1)
+        let injectInto = injectTarget, submit = host.inject == .submit
         var lastTick = Date.distantPast
         work.async {
             do {
@@ -283,8 +299,19 @@ final class SendModel: ObservableObject {
                     lastTick = Date()
                     DispatchQueue.main.async { self.progress = min(Double(sent) / total, 1) }
                 }
+                var message = "Sent. Path copied to the clipboard."
+                if let s = injectInto {
+                    do {
+                        try Remote.inject(ssh, into: s, text: r.clipboard + " ", submit: submit)
+                        message = submit ? "Sent, typed into Claude and submitted. Also copied."
+                                         : "Sent and typed into the Claude prompt. Also copied."
+                    } catch {
+                        message = "Sent. Path copied, but typing into Claude failed: " + Display.sentence("\(error)")
+                    }
+                }
                 DispatchQueue.main.async {
                     Sender.copyToClipboard(r.clipboard)
+                    self.doneMessage = message
                     self.result = r
                     self.progress = 1
                     self.phase = .done

@@ -133,6 +133,14 @@ All arguments arrive as one base64 JSON object. Output is JSON lines.
   the Claude entries).
 - `list {dir, prefix}` → up to 200 entries `{name, dir: bool}` for Tab
   completion. Confined to `allowed_roots`.
+- `inject {pane, pid, text, submit}` (opt-in, `inject` per host) pastes the
+  shell-escaped remote paths into the tmux pane of a Claude session as a
+  bracketed paste, and presses Enter only with `inject = "submit"`. Refused
+  unless `pid` is the user's process named `claude`, its `TMUX_PANE` is
+  `pane`, and the pane's own process is its ancestor; `text` must have no
+  control characters. It never types into a shell. Claude outside tmux is
+  not supported: injecting into another terminal (`TIOCSTI`) is disabled on
+  modern kernels.
 - `upload {dir, allowed_roots}` with a tar stream on stdin → writes entries,
   prints `{dir}` then `{top}` per top-level item written.
 

@@ -72,6 +72,8 @@ enum Remote {
         let kind: Kind
         let cwd: String
         let tmux: String
+        let pane: String       // tmux pane id ("%3") for Claude in tmux, else ""
+        let pid: Int
         let started: Date
         var id: String { "\(kind.rawValue):\(cwd):\(tmux):\(started.timeIntervalSince1970)" }
     }
@@ -91,7 +93,9 @@ enum Remote {
                   let cwd = s["cwd"] as? String, Check.path(cwd) else { continue }
             let tmux = (s["tmux"] as? String).map { String(Display.clean($0).prefix(60)) } ?? ""
             let started = Date(timeIntervalSince1970: TimeInterval(s["started"] as? Int ?? 0))
-            sessions.append(Session(kind: k, cwd: cwd, tmux: tmux, started: started))
+            var pane = s["pane"] as? String ?? ""
+            if pane.range(of: "^%[0-9]{1,6}$", options: .regularExpression) == nil { pane = "" }
+            sessions.append(Session(kind: k, cwd: cwd, tmux: tmux, pane: pane, pid: s["pid"] as? Int ?? 0, started: started))
         }
         return Discovery(home: home, sessions: sessions)
     }
@@ -113,6 +117,12 @@ enum Remote {
             out.append(Entry(name: n, isDir: e["dir"] as? Bool ?? false))
         }
         return (d, out)
+    }
+
+    /// Paste text into the Claude session's tmux pane (the host re-checks the pane runs that claude).
+    static func inject(_ ssh: SSH, into s: Session, text: String, submit: Bool) throws {
+        guard s.kind == .claude, !s.pane.isEmpty, s.pid > 1 else { throw RemoteError("this session is not in tmux") }
+        _ = try call(ssh, ["cmd": "inject", "pane": s.pane, "pid": s.pid, "text": text, "submit": submit], timeout: 15)
     }
 
     struct Written { let sent: String; let name: String }

@@ -21,6 +21,10 @@ Requests
         Resolve a destination (~ expanded, realpath) and check it is inside a root.
     {"cmd": "list", "dir": D, "prefix": X, "roots": [R...]}
         Directory entries of D starting with X, for Tab completion.
+    {"cmd": "inject", "pane": "%N", "pid": P, "text": T, "submit": bool}
+        Paste T into tmux pane %N as a bracketed paste (and press Enter if
+        submit). Only if process P is named claude, runs inside that pane, and
+        T has no control characters. Opt-in on the client; never into a shell.
     {"cmd": "upload", "dir": D, "roots": [R...], "create": bool, "tops": [N...]}
         Read a tar stream on stdin and write it into D. Only the top-level names
         in "tops" are accepted; each is written as N, or N-1, N-2 ... if taken.
@@ -118,8 +122,16 @@ def boot_time():
         return time.time() - float(f.read().split()[0])
 
 
-def tmux_session(env):
+PANE_RE = re.compile(r"^%[0-9]{1,6}$")
+
+
+def tmux_pane(env):
     pane = env.get(b"TMUX_PANE", b"").decode("utf-8", "replace")
+    return pane if PANE_RE.match(pane) else ""
+
+
+def tmux_session(env):
+    pane = tmux_pane(env)
     if not pane:
         return ""
     try:
@@ -141,8 +153,9 @@ def discover(req):
             if proc_read(pid, "comm").strip() != "claude":
                 continue
             f = stat_fields(pid)
+            env = environ(pid)
             sessions.append({"kind": "claude", "cwd": os.readlink("/proc/%s/cwd" % pid),
-                             "tmux": tmux_session(environ(pid)),
+                             "tmux": tmux_session(env), "pane": tmux_pane(env), "pid": int(pid),
                              "started": int(boot + int(f[19]) / hz)})
             claude_ttys.add(f[4])
         except (OSError, IndexError, ValueError):
@@ -159,7 +172,7 @@ def discover(req):
             if proc_read(fg, "comm").strip().startswith("tmux"):
                 continue  # Claude inside tmux is listed from its own process
             sessions.append({"kind": "shell", "cwd": os.readlink("/proc/%s/cwd" % fg),
-                             "tmux": "", "started": int(boot + int(f[19]) / hz)})
+                             "tmux": "", "pane": "", "pid": int(pid), "started": int(boot + int(f[19]) / hz)})
         except (OSError, IndexError, ValueError):
             continue
     sessions.sort(key=lambda s: -s["started"])
@@ -191,6 +204,50 @@ def list_dir(req):
         if len(entries) >= MAX_LIST:
             break
     return {"dir": d, "entries": entries, "truncated": len(entries) >= MAX_LIST}
+
+
+# ---------------------------------------------------------------- inject
+
+
+def tmux(*args, stdin=None):
+    try:
+        r = subprocess.run(["tmux"] + list(args), input=stdin, capture_output=True, timeout=5)
+    except (OSError, subprocess.SubprocessError) as e:
+        raise Refused("tmux failed: %s" % e)
+    if r.returncode != 0:
+        raise Refused("tmux %s failed: %s" % (args[0], r.stderr.decode("utf-8", "replace").strip()[:200]))
+    return r.stdout.decode("utf-8", "replace").strip()
+
+
+def inject(req):
+    pane, pid, text = req.get("pane"), req.get("pid"), req.get("text")
+    if not isinstance(pane, str) or not PANE_RE.match(pane):
+        raise Refused("invalid pane")
+    if not isinstance(pid, int) or pid <= 1:
+        raise Refused("invalid pid")
+    if not isinstance(text, str) or not text or len(text) > 8192 or any(ord(c) < 0x20 or ord(c) == 0x7F for c in text):
+        raise Refused("invalid text")
+    p = str(pid)
+    try:
+        if os.stat("/proc/" + p).st_uid != os.getuid() or proc_read(p, "comm").strip() != "claude":
+            raise Refused("process %s is not your claude session" % p)
+        if tmux_pane(environ(p)) != pane:
+            raise Refused("claude process %s is not in pane %s" % (p, pane))
+    except OSError:
+        raise Refused("claude process %s is gone" % p)
+    # The pane's own process must be an ancestor of the claude process.
+    pane_pid = tmux("display-message", "-p", "-t", pane, "#{pane_pid}")
+    q = p
+    while q not in ("0", "1", pane_pid):
+        q = stat_fields(q)[1]
+    if q != pane_pid:
+        raise Refused("claude process %s does not run in pane %s" % (p, pane))
+    buf = "ccsend-%d" % os.getpid()
+    tmux("load-buffer", "-b", buf, "-", stdin=text.encode("utf-8"))
+    tmux("paste-buffer", "-p", "-d", "-b", buf, "-t", pane)
+    if req.get("submit") is True:
+        tmux("send-keys", "-t", pane, "Enter")
+    return {"pane": pane, "submitted": req.get("submit") is True}
 
 
 # ---------------------------------------------------------------- upload
@@ -315,7 +372,7 @@ def receive(target, tops, written, order):
 
 # ---------------------------------------------------------------- main
 
-COMMANDS = {"discover": discover, "resolve": resolve, "list": list_dir, "upload": upload}
+COMMANDS = {"discover": discover, "resolve": resolve, "list": list_dir, "upload": upload, "inject": inject}
 
 
 ID_RE = re.compile(r"^[A-Za-z0-9-]{1,64}$")
@@ -352,6 +409,8 @@ def log(req, out):
                 parts.append(("names", [w["name"] for w in out["written"]]))
         if "path" in out:
             parts.append(("path", out["path"]))
+        if "pane" in out:
+            parts += [("pane", out["pane"]), ("submitted", out["submitted"])]
     else:
         parts.append(("error", out.get("error", "")[:300]))
     try:

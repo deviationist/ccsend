@@ -12,6 +12,7 @@ struct SendView: View {
             header
             if model.config.menu == .single && model.config.hosts.count > 1 { hostPicker }
             destinationSection
+            injectOption
             if model.plan?.hasFolders == true { folderSection }
             warnings
             Spacer(minLength: 0)
@@ -194,6 +195,24 @@ struct SendView: View {
         }
     }
 
+    /// Only for hosts that opted in (inject = "type" or "submit") and a selected Claude session.
+    @ViewBuilder private var injectOption: some View {
+        if model.host.inject != .off, let s = model.selectedClaude {
+            if s.pane.isEmpty {
+                Label { Text(verbatim: "This Claude session isn't running in tmux, so the path will only be copied.") }
+                    icon: { Image(systemName: "info.circle") }
+                    .font(.callout).foregroundStyle(.secondary)
+            } else {
+                Toggle(isOn: $model.injectOn) {
+                    Text(verbatim: model.host.inject == .submit
+                         ? "Type the path into the Claude prompt and press Enter"
+                         : "Type the path into the Claude prompt")
+                }
+                .disabled(model.phase == .sending || model.phase == .done)
+            }
+        }
+    }
+
     private var folderSection: some View {
         GroupBox {
             VStack(alignment: .leading, spacing: 6) {
@@ -240,7 +259,7 @@ struct SendView: View {
                 Text(verbatim: "Sending…").foregroundStyle(.secondary)
             case .done:
                 Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
-                Text(verbatim: "Sent. Path copied to the clipboard.").lineLimit(1)
+                Text(verbatim: model.doneMessage).lineLimit(2)
             default:
                 EmptyView()
             }

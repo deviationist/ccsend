@@ -171,6 +171,8 @@ enum TOML {
 // MARK: - Schema
 
 enum MenuMode: String { case perHost = "per-host", single }
+/// Typing the remote path into a Claude Code prompt (tmux only). Opt-in per host.
+enum Inject: String { case off, type, submit }
 enum Preselect: String { case newestClaude = "newest-claude", defaultLocation = "default-location", none }
 
 struct HostConfig {
@@ -184,6 +186,7 @@ struct HostConfig {
     var defaultLocation = ""    // "" = off
     var customPath = true
     var allowedRoots = ["~"]
+    var inject = Inject.off
 }
 
 struct Config {
@@ -300,6 +303,10 @@ struct Config {
                 if let s = try str("default_location") { h.defaultLocation = s }
                 if let b = try bool("custom_path") { h.customPath = b }
                 if let a = try strs("allowed_roots") { h.allowedRoots = a }
+                if let s = try str("inject") {
+                    guard let i = Inject(rawValue: s) else { throw ConfigError("[\(n)]: inject must be \"off\", \"type\" or \"submit\"") }
+                    h.inject = i
+                }
                 try validate(h)
                 c.hosts.append(h)
             default:
@@ -379,6 +386,7 @@ struct Config {
             default_location = "~/inbox" # "" turns the Default destination off
             custom_path = true           # "Path" destination with Tab completion
             allowed_roots = ["~"]        # destinations must resolve inside these (checked on the host)
+            inject = "off"               # Claude in tmux only: "type" pastes the path into its prompt, "submit" also presses Enter
 
             """
         }

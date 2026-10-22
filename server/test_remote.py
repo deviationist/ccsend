@@ -12,7 +12,9 @@ import os
 import subprocess
 import sys
 import tarfile
+import shutil
 import tempfile
+import time
 import unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -55,11 +57,11 @@ def tar_bytes(entries):
 class Remote(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
+        # Cleanups run last-in first-out, so anything a test registers later
+        # (like killing its tmux server) runs before the directory is removed.
+        self.addCleanup(self.tmp.cleanup)
         self.home = os.path.realpath(self.tmp.name)
         os.mkdir(os.path.join(self.home, "dest"))
-
-    def tearDown(self):
-        self.tmp.cleanup()
 
     def run_remote(self, req, stdin=b""):
         env = dict(os.environ, HOME=self.home)
@@ -186,6 +188,56 @@ class Remote(unittest.TestCase):
         out = self.run_remote({"cmd": "upload", "dir": "~/dest", "roots": ["~"], "tops": ["web"]}, data[:20000])
         self.assertFalse(out["ok"])
         self.assertEqual(os.listdir(self.p("dest")), [])
+
+    # ------------------------------------------------------------ inject
+
+    def test_inject_refusals_without_tmux(self):
+        for req in ({"pane": "1", "pid": 2, "text": "x"}, {"pane": "%1;rm", "pid": 2, "text": "x"},
+                    {"pane": "%1", "pid": "2", "text": "x"}, {"pane": "%1", "pid": 2, "text": "a\nb"},
+                    {"pane": "%1", "pid": 2, "text": "a\x1b[2J"}, {"pane": "%1", "pid": 2, "text": ""}):
+            self.assertFalse(self.run_remote(dict(req, cmd="inject"))["ok"], req)
+
+    @unittest.skipUnless(sys.platform.startswith("linux") and shutil.which("tmux"), "needs Linux and tmux")
+    def test_inject_into_tmux(self):
+        sock = os.path.join(self.home, "tmux.sock")
+        fake = os.path.join(self.home, "claude")
+        shutil.copy(os.path.realpath(sys.executable), fake)
+        env = dict(os.environ, HOME=self.home)
+        env.pop("TMUX", None)
+
+        def tm(*a):
+            return subprocess.run(["tmux", "-S", sock] + list(a), capture_output=True, text=True, env=env).stdout.strip()
+
+        # Pane 1 runs a fake "claude" that echoes its input; pane 2 runs a plain shell.
+        tm("new-session", "-d", "-s", "t", "-x", "200", "-y", "20", fake, "-c",
+           "import sys\nfor l in sys.stdin: print('GOT', l, end='')")
+        tm("split-window", "-t", "t", "sh")
+        self.addCleanup(lambda: tm("kill-server"))
+        panes = dict(l.split() for l in tm("list-panes", "-t", "t", "-F", "#{pane_index} #{pane_id}").splitlines())
+        claude_pid = None
+        for _ in range(50):
+            for pid in os.listdir("/proc"):
+                try:
+                    if pid.isdigit() and os.readlink("/proc/%s/exe" % pid) == os.path.realpath(fake):
+                        claude_pid = int(pid)
+                except OSError:
+                    pass
+            if claude_pid:
+                break
+            time.sleep(0.1)
+        self.assertTrue(claude_pid)
+        # remote.py talks to the same tmux server through TMUX (as it would inside a session).
+        os.environ["TMUX"] = sock + ",0,0"
+        self.addCleanup(lambda: os.environ.pop("TMUX", None))
+        good = {"cmd": "inject", "pane": panes["0"], "pid": claude_pid, "text": "/home/a/x\\ y.png ", "submit": True}
+        out = self.run_remote(good)
+        self.assertTrue(out["ok"], out)
+        time.sleep(0.5)
+        self.assertIn("GOT /home/a/x\\ y.png", tm("capture-pane", "-p", "-t", panes["0"]))
+        # The shell pane is refused even with the claude pid, and nothing is typed there.
+        out = self.run_remote(dict(good, pane=panes["1"]))
+        self.assertFalse(out["ok"])
+        self.assertNotIn("x\\ y.png", tm("capture-pane", "-p", "-t", panes["1"]))
 
     # ------------------------------------------------------------ discover
 

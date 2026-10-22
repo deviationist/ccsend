@@ -8,6 +8,7 @@ usage:
         --hidden      include hidden files in folders
         --all         do not apply the exclude list
         --yes         send even when over the configured limits
+        --no-inject   do not type the path into the Claude prompt (when the host has inject on)
   ccsend sessions HOST                         list the host's Claude sessions and SSH shells
   ccsend check                                 validate the config and test every host
   ccsend log [--host HOST] [-n N]              last N events from the Mac log, or from HOST's journal
@@ -40,7 +41,7 @@ func describe(_ p: Plan) -> String {
 
 func cmdSend(_ args: [String]) throws {
     var rest = args, opts: Set<String> = []
-    while let a = rest.first, ["--hidden", "--all", "--yes"].contains(a) { opts.insert(a); rest.removeFirst() }
+    while let a = rest.first, ["--hidden", "--all", "--yes", "--no-inject"].contains(a) { opts.insert(a); rest.removeFirst() }
     guard rest.count >= 3 else { fail(usage) }
     let config = try Config.load()
     let host = try config.host(rest[0])
@@ -59,12 +60,13 @@ func cmdSend(_ args: [String]) throws {
     }
 
     let ssh = SSH(host: host, controlPath: nil)
-    var dir = dest, create = false
+    var dir = dest, create = false, target: Remote.Session?
     switch dest {
     case "claude", "shell":
         let d = try Remote.discover(ssh)
         guard let s = d.sessions.first(where: { $0.kind.rawValue == dest }) else { fail("no \(dest) session on \(host.label)") }
         dir = s.cwd
+        target = s
     case "default":
         guard !host.defaultLocation.isEmpty else { fail("\(host.name) has no default_location") }
         dir = host.defaultLocation
@@ -76,6 +78,18 @@ func cmdSend(_ args: [String]) throws {
     Sender.copyToClipboard(r.clipboard)
     print("sent to \(host.label):\(r.dir)")
     print(r.clipboard)
+    if let s = target, s.kind == .claude, host.inject != .off, !opts.contains("--no-inject") {
+        if s.pane.isEmpty {
+            print("not typed into Claude: that session is not in tmux (path is on the clipboard)")
+        } else {
+            do {
+                try Remote.inject(ssh, into: s, text: r.clipboard + " ", submit: host.inject == .submit)
+                print(host.inject == .submit ? "typed into Claude and submitted" : "typed into the Claude prompt")
+            } catch {
+                print("not typed into Claude: \(error) (path is on the clipboard)")
+            }
+        }
+    }
 }
 
 func cmdSessions(_ name: String) throws {

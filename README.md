@@ -68,7 +68,19 @@ ssh_sessions = true
 default_location = "~/inbox"
 custom_path = true
 allowed_roots = ["~"]        # uploads must resolve inside these, checked on the host
+inject = "off"               # opt-in, see below
 ```
+
+### Typing the path into Claude (opt-in, tmux only)
+
+With `inject = "type"` on a host, sending to a Claude Code session that runs
+inside tmux also pastes the remote path into that session's prompt, so you
+only add your message. `inject = "submit"` also presses Enter. The window has
+a checkbox to skip it for one send. The CLI has `--no-inject`.
+
+Before pasting, the host checks that the pane really runs that `claude`
+process; it never types into a shell. Sessions outside tmux are not
+supported: the path is only copied to the clipboard, as always.
 
 ## Command line
 
