@@ -20,16 +20,15 @@ enum Installer {
     static func install() throws {
         let config = try Config.load()
         let app = try appPath()
-        // (title, args, takes Finder items)
+        // (title, args, takes Finder items). Import is not a Quick Action: it lives in
+        // the right-click menu itself, from the Finder extension (finder-menu.json).
         var wanted: [(title: String, args: String, items: Bool)] = []
         let importers = config.hosts.filter(\.importEnabled)
         switch config.menu {
         case .perHost:
             for h in config.hosts { wanted.append(("Send to \(h.label)", "ui --host \(h.name) --", true)) }
-            for h in importers { wanted.append(("Import from \(h.label)", "ui-import --host \(h.name) --", true)) }
         case .single:
             wanted.append(("Send to remote", "ui --", true))
-            if !importers.isEmpty { wanted.append(("Import from remote", "ui-import --", true)) }
         }
         let fm = FileManager.default
         try fm.createDirectory(at: services, withIntermediateDirectories: true)

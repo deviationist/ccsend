@@ -23,9 +23,9 @@ nothing listens on the Mac, and the host holds no credential.
    is on the clipboard.
 
 **Import (opt-in, `import = true` per host)** works the other way round:
-right-click the Desktop or empty space in a folder → **Import from &lt;host&gt;**
-(from ccsend's Finder extension), or right-click a folder → Quick Actions →
-**Import from &lt;host&gt;**. Browse the host,
+right-click the Desktop or empty space in a Finder window → **Import from &lt;host&gt;**.
+These items come from ccsend's Finder extension and sit in the main
+right-click menu, not under Quick Actions. Browse the host,
 tick files and folders, and press Import. The Mac fetches them over SSH and
 shows them in Finder.
 
