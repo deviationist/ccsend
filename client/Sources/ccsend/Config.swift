@@ -188,6 +188,9 @@ struct HostConfig {
     var allowedRoots = ["~"]
     var inject = Inject.off
     var injectVia: [Injector.Adapter] = [.tmux]
+    var importEnabled = false           // opt-in: "Import from <host>"
+    var importRoots = ["~"]
+    var importSymlinks = false
 }
 
 struct Config {
@@ -308,6 +311,9 @@ struct Config {
                     guard let i = Inject(rawValue: s) else { throw ConfigError("[\(n)]: inject must be \"off\", \"type\" or \"submit\"") }
                     h.inject = i
                 }
+                if let b = try bool("import") { h.importEnabled = b }
+                if let a = try strs("import_roots") { h.importRoots = a }
+                if let b = try bool("import_symlinks") { h.importSymlinks = b }
                 if let (v, l) = take("inject_via") {
                     guard case .strings(let a) = v, !a.isEmpty else { throw ConfigError("line \(l): inject_via must be a list like [\"tmux\", \"iterm\"]") }
                     h.injectVia = try a.map { s in
@@ -347,7 +353,8 @@ struct Config {
             guard !parts[1].contains(where: { $0.isNewline || $0 == "\0" }) else { throw ConfigError("\(ctx): bad ssh_options value") }
         }
         guard !h.allowedRoots.isEmpty else { throw ConfigError("\(ctx): allowed_roots must not be empty") }
-        for p in h.allowedRoots + (h.defaultLocation.isEmpty ? [] : [h.defaultLocation]) {
+        guard !h.importRoots.isEmpty else { throw ConfigError("\(ctx): import_roots must not be empty") }
+        for p in h.allowedRoots + h.importRoots + (h.defaultLocation.isEmpty ? [] : [h.defaultLocation]) {
             guard p == "~" || p.hasPrefix("~/") || p.hasPrefix("/") else {
                 throw ConfigError("\(ctx): \(p) must be absolute or start with ~/")
             }
@@ -396,6 +403,9 @@ struct Config {
             allowed_roots = ["~"]        # destinations must resolve inside these (checked on the host)
             inject = "off"               # opt-in: "type" puts the path in the Claude prompt, "submit" also presses Enter
             inject_via = ["tmux"]        # adapters, tried in order: "tmux" (host-side), "iterm" (Mac types into the iTerm2 tab)
+            import = false               # opt-in: "Import from <host>" pulls files from the host into a Mac folder
+            import_roots = ["~"]         # what the Mac may browse and fetch on this host (checked on the host)
+            import_symlinks = false      # links in imported folders: skipped (false) or kept as links (true)
 
             """
         }

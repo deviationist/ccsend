@@ -161,7 +161,10 @@ struct SendView: View {
                     Text(verbatim: "Created if missing").font(.caption).foregroundStyle(.secondary)
                 case .path:
                     Text(verbatim: "Path").frame(width: 56, alignment: .leading).bold()
-                    PathField(model: model, onFocus: { model.selected = "path" })
+                    PathField(text: model.path,
+                              onEdit: { model.path = $0; model.candidates = []; model.completionNote = "" },
+                              onTab: { model.complete() },
+                              onFocus: { model.selected = "path" })
                         .frame(height: 22)
                     Text(verbatim: "Tab completes").font(.caption).foregroundStyle(.secondary)
                 }
@@ -318,15 +321,19 @@ struct Flow: Layout {
     }
 }
 
-/// NSTextField with Tab handed to the model for completion.
+/// NSTextField that hands Tab to `onTab` (completion) and Enter to `onSubmit`.
 struct PathField: NSViewRepresentable {
-    @ObservedObject var model: SendModel
-    var onFocus: () -> Void
+    var text: String
+    var placeholder = "~/path/on/host"
+    var onEdit: (String) -> Void
+    var onTab: () -> Void
+    var onSubmit: (() -> Void)? = nil
+    var onFocus: () -> Void = {}
 
     func makeNSView(context: Context) -> NSTextField {
         let f = NSTextField()
         f.font = .monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
-        f.placeholderString = "~/path/on/host"
+        f.placeholderString = placeholder
         f.delegate = context.coordinator
         f.isBordered = true
         f.bezelStyle = .roundedBezel
@@ -337,33 +344,36 @@ struct PathField: NSViewRepresentable {
     }
 
     func updateNSView(_ f: NSTextField, context: Context) {
-        if f.stringValue != model.path {
-            f.stringValue = model.path
+        context.coordinator.parent = self
+        if f.stringValue != text {
+            f.stringValue = text
             // Keep the caret at the end after a completion.
-            if let editor = f.currentEditor() { editor.selectedRange = NSRange(location: (model.path as NSString).length, length: 0) }
+            if let editor = f.currentEditor() { editor.selectedRange = NSRange(location: (text as NSString).length, length: 0) }
         }
     }
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
     final class Coordinator: NSObject, NSTextFieldDelegate {
-        let parent: PathField
+        var parent: PathField
         init(_ p: PathField) { parent = p }
 
         func controlTextDidBeginEditing(_ obj: Notification) { parent.onFocus() }
 
         func controlTextDidChange(_ obj: Notification) {
             guard let f = obj.object as? NSTextField else { return }
-            parent.model.path = f.stringValue
-            parent.model.candidates = []
-            parent.model.completionNote = ""
+            parent.onEdit(f.stringValue)
             parent.onFocus()
         }
 
         func control(_ control: NSControl, textView: NSTextView, doCommandBy sel: Selector) -> Bool {
             if sel == #selector(NSResponder.insertTab(_:)) {
                 parent.onFocus()
-                parent.model.complete()
+                parent.onTab()
+                return true
+            }
+            if sel == #selector(NSResponder.insertNewline(_:)), let submit = parent.onSubmit {
+                submit()
                 return true
             }
             return false

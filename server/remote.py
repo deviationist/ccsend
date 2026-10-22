@@ -29,6 +29,19 @@ Requests
         Confirm process P is still your claude, in the foreground of the SSH
         terminal whose client port is N. The client asks right before typing
         into that terminal from the Mac (the iTerm adapter).
+    {"cmd": "browse", "dir": D, "roots": [R...], "hidden": bool}
+        Entries of D (name, kind file|dir|link|other, size, mtime) for the
+        import window. D must resolve inside a root.
+    {"cmd": "download", "dir": D, "names": [N...], "roots": [R...],
+     "symlinks": bool, "hidden": bool, "excludes": [G...], "dry_run": bool,
+     "max_bytes": B, "max_files": F}
+        The named entries of D, folders walked without following links.
+        dry_run: only count. Otherwise a pax tar stream goes to stdout and the
+        JSON result to stderr as one line "CCSEND-RESULT {...}". Inside
+        folders, hidden entries are skipped unless hidden, and names matching
+        an excludes glob are skipped; the named entries themselves always go.
+        Links are skipped unless symlinks; other special files always are.
+        Owner names and ids are not sent.
     {"cmd": "upload", "dir": D, "roots": [R...], "create": bool, "tops": [N...]}
         Read a tar stream on stdin and write it into D. Only the top-level names
         in "tops" are accepted; each is written as N, or N-1, N-2 ... if taken.
@@ -234,6 +247,149 @@ def list_dir(req):
     return {"dir": d, "entries": entries, "truncated": len(entries) >= MAX_LIST}
 
 
+# ---------------------------------------------------------------- browse / download
+
+MAX_BROWSE = 5000
+
+
+def kind_of(st_mode):
+    import stat as st
+    if st.S_ISLNK(st_mode):
+        return "link"
+    if st.S_ISDIR(st_mode):
+        return "dir"
+    if st.S_ISREG(st_mode):
+        return "file"
+    return "other"
+
+
+def browse(req):
+    d = confined(req.get("dir"), roots_of(req))
+    hidden = req.get("hidden") is True
+    try:
+        names = sorted(os.listdir(d), key=lambda n: n.lower())
+    except OSError as e:
+        raise Refused("cannot list %s: %s" % (d, e.strerror))
+    entries = []
+    for name in names:
+        if name.startswith(".") and not hidden:
+            continue
+        try:
+            st = os.lstat(os.path.join(d, name))
+        except OSError:
+            continue
+        k = kind_of(st.st_mode)
+        entries.append({"name": name, "kind": k, "size": st.st_size if k == "file" else 0, "mtime": int(st.st_mtime)})
+        if len(entries) >= MAX_BROWSE:
+            break
+    parent = os.path.dirname(d)
+    roots = roots_of(req)
+    return {"dir": d, "entries": entries, "truncated": len(entries) >= MAX_BROWSE,
+            "parent": parent if parent != d and inside(parent, roots) else ""}
+
+
+def walk_selection(d, names, symlinks, hidden=True, excludes=()):
+    """(path, arcname, kind) for the selection; folders walked without following links."""
+    import fnmatch
+    skipped = {"links": 0, "special": 0, "hidden": 0, "excluded": 0}
+
+    def visit(path, arc, top=False):
+        name = os.path.basename(path)
+        if not top:
+            if not hidden and name.startswith("."):
+                skipped["hidden"] += 1
+                return
+            if any(fnmatch.fnmatchcase(name, g) for g in excludes):
+                skipped["excluded"] += 1
+                return
+        try:
+            mode = os.lstat(path).st_mode
+        except OSError:
+            return
+        k = kind_of(mode)
+        if k == "link":
+            if symlinks:
+                yield path, arc, "link"
+            else:
+                skipped["links"] += 1
+            return
+        if k == "other":
+            skipped["special"] += 1
+            return
+        yield path, arc, k
+        if k == "dir":
+            try:
+                children = sorted(os.listdir(path))
+            except OSError:
+                return
+            for c in children:
+                for x in visit(os.path.join(path, c), arc + "/" + c):
+                    yield x
+
+    entries = []
+    for n in names:
+        entries.extend(visit(os.path.join(d, n), n, top=True))
+    return entries, skipped
+
+
+def download(req):
+    roots = roots_of(req)
+    d = confined(req.get("dir"), roots)
+    names = req.get("names")
+    if not isinstance(names, list) or not names or not all(valid_name(n) for n in names) or len(set(names)) != len(names):
+        raise Refused("invalid names")
+    for n in names:
+        if not os.path.lexists(os.path.join(d, n)):
+            raise Refused("%s does not exist in %s" % (n, d))
+    excludes = req.get("excludes") or []
+    if not isinstance(excludes, list) or not all(isinstance(g, str) and len(g) < 200 for g in excludes):
+        raise Refused("invalid excludes")
+    entries, skipped = walk_selection(d, names, req.get("symlinks") is True, req.get("hidden") is True, excludes[:200])
+    files = sum(1 for e in entries if e[2] != "dir")
+    total = 0
+    for path, _, k in entries:
+        if k == "file":
+            try:
+                total += os.lstat(path).st_size
+            except OSError:
+                pass
+    result = {"dir": d, "files": files, "bytes": total, "skipped_links": skipped["links"],
+              "skipped_special": skipped["special"], "skipped_hidden": skipped["hidden"],
+              "skipped_excluded": skipped["excluded"], "tops": [n for n in names]}
+    if req.get("dry_run") is True:
+        return result
+    max_bytes, max_files = req.get("max_bytes"), req.get("max_files")
+    if isinstance(max_bytes, int) and total > max_bytes or isinstance(max_files, int) and files > max_files:
+        raise Refused("selection is over the limits (%d files, %d bytes)" % (files, total))
+
+    def strip(ti):
+        ti.uid = ti.gid = 0
+        ti.uname = ti.gname = ""
+        ti.mode &= 0o777   # no setuid/setgid/sticky
+        return ti
+
+    sent_files, sent_bytes = 0, 0
+    with tarfile.open(fileobj=sys.stdout.buffer, mode="w|", format=tarfile.PAX_FORMAT) as tar:
+        for path, arc, k in entries:
+            try:
+                ti = strip(tar.gettarinfo(path, arcname=arc))
+            except OSError:
+                continue   # vanished since the walk
+            if k == "file" and ti.isreg():
+                with open(path, "rb") as f:
+                    tar.addfile(ti, f)
+                sent_files += 1
+                sent_bytes += ti.size
+            elif k == "dir" and ti.isdir():
+                tar.addfile(ti)
+            elif k == "link" and ti.issym():
+                tar.addfile(ti)
+                sent_files += 1
+    sys.stdout.buffer.flush()
+    result.update(files=sent_files, bytes=sent_bytes, streamed=True)
+    return result
+
+
 # ---------------------------------------------------------------- inject
 
 
@@ -416,7 +572,7 @@ def receive(target, tops, written, order):
 # ---------------------------------------------------------------- main
 
 COMMANDS = {"discover": discover, "resolve": resolve, "list": list_dir, "upload": upload, "inject": inject,
-            "foreground": foreground}
+            "foreground": foreground, "browse": browse, "download": download}
 
 
 ID_RE = re.compile(r"^[A-Za-z0-9-]{1,64}$")
@@ -453,6 +609,11 @@ def log(req, out):
                 parts.append(("names", [w["name"] for w in out["written"]]))
         if "path" in out:
             parts.append(("path", out["path"]))
+        if "tops" in out and "skipped_links" in out:
+            parts += [("dir", out["dir"]), ("items", len(out["tops"])), ("files", out["files"]), ("bytes", out["bytes"]),
+                      ("dry_run", not out.get("streamed", False)), ("skipped_links", out["skipped_links"])]
+            if req.get("log_names", True) is not False:
+                parts.append(("names", out["tops"]))
         if "pane" in out:
             parts += [("pane", out["pane"]), ("submitted", out["submitted"])]
     else:
@@ -478,7 +639,11 @@ def main():
     except Exception as e:
         out = {"ok": False, "error": "%s: %s" % (type(e).__name__, e)}
     log(req if isinstance(req, dict) else {}, out)
-    sys.stdout.write(json.dumps(out) + "\n")
+    if isinstance(req, dict) and req.get("cmd") == "download" and req.get("dry_run") is not True:
+        # stdout carries the tar stream; the result goes to stderr.
+        sys.stderr.write("CCSEND-RESULT " + json.dumps(out) + "\n")
+    else:
+        sys.stdout.write(json.dumps(out) + "\n")
     sys.exit(0 if out["ok"] else 1)
 
 

@@ -20,12 +20,22 @@ enum Installer {
     static func install() throws {
         let config = try Config.load()
         let app = try appPath()
-        var wanted: [(title: String, args: String)] = []
+        // (title, args, takes Finder items)
+        var wanted: [(title: String, args: String, items: Bool)] = []
+        let importers = config.hosts.filter(\.importEnabled)
         switch config.menu {
         case .perHost:
-            for h in config.hosts { wanted.append(("Send to \(h.label)", "ui --host \(h.name)")) }
+            for h in config.hosts { wanted.append(("Send to \(h.label)", "ui --host \(h.name) --", true)) }
+            for h in importers {
+                wanted.append(("Import from \(h.label)", "ui-import --host \(h.name) --", true))
+                wanted.append(("Import from \(h.label) here", "ui-import --host \(h.name) --finder", false))
+            }
         case .single:
-            wanted.append(("Send to remote", "ui"))
+            wanted.append(("Send to remote", "ui --", true))
+            if !importers.isEmpty {
+                wanted.append(("Import from remote", "ui-import --", true))
+                wanted.append(("Import from remote here", "ui-import --finder", false))
+            }
         }
         let fm = FileManager.default
         try fm.createDirectory(at: services, withIntermediateDirectories: true)
@@ -43,8 +53,8 @@ enum Installer {
                 throw RemoteError("\(wf.path) exists and was not made by ccsend; rename the host label or remove it")
             }
             // Host names are validated identifiers; the app path has no single quote.
-            let command = "open -n -a '\(app)' --args \(w.args) -- \"$@\""
-            try write(workflow: wf, title: w.title, command: command)
+            let command = "open -n -a '\(app)' --args \(w.args)" + (w.items ? " \"$@\"" : "")
+            try write(workflow: wf, title: w.title, command: command, items: w.items)
             print("created Quick Action \"\(w.title)\"")
         }
         for r in removed where !wanted.contains(where: { $0.title == r }) { print("removed Quick Action \"\(r)\"") }
@@ -73,19 +83,23 @@ enum Installer {
     static func isOurs(_ wf: URL) -> Bool {
         guard let d = try? Data(contentsOf: wf.appendingPathComponent("Contents/document.wflow")),
               let s = String(data: d, encoding: .utf8) else { return false }
-        return s.contains("ccsend.app' --args ui")
+        return s.contains("ccsend.app' --args ui")   // matches ui and ui-import
     }
 
-    static func write(workflow wf: URL, title: String, command: String) throws {
+    /// items: the action receives the selected Finder items; otherwise it takes no input.
+    static func write(workflow wf: URL, title: String, command: String, items: Bool) throws {
         let contents = wf.appendingPathComponent("Contents")
         try FileManager.default.createDirectory(at: contents, withIntermediateDirectories: true)
-        let info: [String: Any] = ["NSServices": [[
+        var service: [String: Any] = [
             "NSMenuItem": ["default": title],
             "NSMessage": "runWorkflowAsService",
-            "NSSendFileTypes": ["public.item"],
             "NSIconName": "NSActionTemplate",
             "NSBackgroundColorName": "background",
-        ]]]
+        ]
+        if items { service["NSSendFileTypes"] = ["public.item"] }
+        else { service["NSRequiredContext"] = ["NSApplicationIdentifier": "com.apple.finder"] }
+        let info: [String: Any] = ["NSServices": [service]]
+        let input = items ? "com.apple.Automator.fileSystemObject" : "com.apple.Automator.nothing"
         let action: [String: Any] = [
             "AMAccepts": ["Container": "List", "Optional": true, "Types": ["com.apple.cocoa.string"]],
             "AMActionVersion": "2.0.3",
@@ -95,7 +109,7 @@ enum Installer {
             "ActionBundlePath": "/System/Library/Automator/Run Shell Script.action",
             "ActionName": "Run Shell Script",
             "ActionParameters": ["COMMAND_STRING": command, "CheckedForUserDefaultShell": true,
-                                 "inputMethod": 1, "shell": "/bin/zsh", "source": ""],
+                                 "inputMethod": items ? 1 : 0, "shell": "/bin/zsh", "source": ""],
             "BundleIdentifier": "com.apple.RunShellScript",
             "CFBundleVersion": "2.0.3",
             "CanShowSelectedItemsWhenRun": false,
@@ -115,12 +129,12 @@ enum Installer {
             "connectors": [:],
             "workflowMetaData": [
                 "applicationBundleIDsByPath": [:], "applicationPaths": [],
-                "inputTypeIdentifier": "com.apple.Automator.fileSystemObject",
+                "inputTypeIdentifier": input,
                 "outputTypeIdentifier": "com.apple.Automator.nothing",
                 "presentationMode": 15, "processesInput": false,
                 "serviceApplicationBundleID": "com.apple.finder",
                 "serviceApplicationPath": "/System/Library/CoreServices/Finder.app",
-                "serviceInputTypeIdentifier": "com.apple.Automator.fileSystemObject",
+                "serviceInputTypeIdentifier": input,
                 "serviceOutputTypeIdentifier": "com.apple.Automator.nothing",
                 "serviceProcessesInput": false,
                 "systemImageName": "NSActionTemplate",

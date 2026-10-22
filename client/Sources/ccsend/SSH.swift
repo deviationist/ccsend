@@ -71,6 +71,12 @@ struct SSH {
         unlink(cp)
     }
 
+    func stream(_ remoteCommand: String, timeout: TimeInterval, consume: (FileHandle) throws -> Void) throws -> ProcResult {
+        var a = baseArgs()
+        a += ["--", host.ssh, remoteCommand]
+        return try Proc.stream("/usr/bin/ssh", a, timeout: timeout, consume: consume)
+    }
+
     /// Run a remote command line (already fixed and quoted by Remote).
     func run(_ remoteCommand: String, stdin: ((FileHandle) throws -> Void)? = nil, timeout: TimeInterval) throws -> ProcResult {
         var a = baseArgs()
@@ -89,6 +95,40 @@ struct ProcResult {
 }
 
 enum Proc {
+    /// Run a program and hand its stdout to `consume` as a stream (for large
+    /// downloads). stderr is collected. The process is killed if `consume` throws
+    /// or after `timeout`.
+    static func stream(_ path: String, _ args: [String], timeout: TimeInterval,
+                       consume: (FileHandle) throws -> Void) throws -> ProcResult {
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: path)
+        p.arguments = args
+        let out = Pipe(), err = Pipe()
+        p.standardOutput = out
+        p.standardError = err
+        p.standardInput = FileHandle.nullDevice
+        try p.run()
+        var errData = Data()
+        let group = DispatchGroup()
+        group.enter()
+        DispatchQueue.global().async { errData = err.fileHandleForReading.readDataToEndOfFile(); group.leave() }
+        let watchdog = DispatchWorkItem { if p.isRunning { p.terminate() } }
+        DispatchQueue.global().asyncAfter(deadline: .now() + timeout, execute: watchdog)
+        defer { watchdog.cancel() }
+        do {
+            try consume(out.fileHandleForReading)
+        } catch {
+            p.terminate()
+            group.wait()
+            p.waitUntilExit()
+            throw error
+        }
+        _ = out.fileHandleForReading.readDataToEndOfFile()   // drain anything after the archive
+        group.wait()
+        p.waitUntilExit()
+        return ProcResult(status: p.terminationStatus, stdout: Data(), stderr: errData)
+    }
+
     /// Run a program with an argument vector. stdin, if given, is written on a
     /// background thread (and closed afterwards) while stdout/stderr are drained.
     static func run(_ path: String, _ args: [String], stdin: ((FileHandle) throws -> Void)?,

@@ -18,6 +18,12 @@ nothing listens on the Mac, and the host holds no credential.
 4. The absolute remote path, for example `/home/alice/myapp/Screenshot\ 2026-01-01\ at\ 12.00.00.png`,
    is on the clipboard.
 
+**Import (opt-in, `import = true` per host)** works the other way round:
+right-click a folder (or a file, for its folder) → **Import from &lt;host&gt;**, or use
+**Import from &lt;host&gt; here** for the front Finder window. Browse the host,
+tick files and folders, and press Import. The Mac fetches them over SSH and
+shows them in Finder.
+
 The host side is `server/remote.py`. The app embeds it and runs it with the
 host's own `python3` for the length of one SSH command.
 
@@ -74,6 +80,9 @@ custom_path = true
 allowed_roots = ["~"]        # uploads must resolve inside these, checked on the host
 inject = "off"               # opt-in, see below: "type" | "submit"
 inject_via = ["tmux"]        # adapters, tried in order: "tmux", "iterm"
+import = false               # opt-in: "Import from <host>"
+import_roots = ["~"]         # what the Mac may browse and fetch on this host
+import_symlinks = false      # links inside imported folders: skipped, or kept as links
 ```
 
 ### Typing the path into Claude (opt-in)
@@ -105,6 +114,7 @@ Target one session exactly from the CLI with `claude:DIR`:
 ```sh
 ccsend send devbox claude ~/Desktop/shot.png    # newest Claude session; also: claude:DIR | shell | shell:DIR | default | /path
 ccsend send --hidden --all devbox default ~/proj   # include hidden files, skip the exclude list (--yes: over limits, --no-inject)
+ccsend import devbox --to ~/Downloads ~/myapp/report ~/myapp/notes.md   # same parent folder; --hidden --all --links --yes
 ccsend sessions devbox
 ccsend log                                       # Mac log
 ccsend log --host devbox                         # the host's journal (journalctl -t ccsend)
@@ -118,6 +128,12 @@ In short:
 - **Everything the host says is untrusted.** Its replies are checked, size-capped and cleaned before display, and a host can never choose which host is contacted.
 - **Writes are confined:** only inside `allowed_roots`, never overwriting, and partial uploads are rolled back.
 - **Folders don't leak:** symlinks inside a folder are sent as links, never followed. Hidden files and common junk are filtered on the Mac, and a warning lists sensitive-looking files.
+- **Imports are treated as untrusted:**
+  - The Mac unpacks the archive itself, accepting only files and folders (links only if allowed).
+  - No absolute paths and no `..`; nothing is ever written through a link.
+  - Nothing is overwritten.
+  - Size and file-count limits apply, and free space is checked first.
+  - setuid is dropped, and every file gets the quarantine flag, so Gatekeeper asks before an imported app or script runs.
 - **Logged on both ends,** with shared request ids. The Mac log is the authoritative record.
 
 The threat model and the full set of guarantees are in [DESIGN.md](DESIGN.md).
@@ -126,7 +142,7 @@ The threat model and the full set of guarantees are in [DESIGN.md](DESIGN.md).
 
 macOS asks once for each of these:
 - Access to Desktop, Downloads or Documents, the first time you send from there.
-- "ccsend wants to control iTerm2", only if a host uses `inject_via = ["iterm"]`.
+- "ccsend wants to control Finder" for **Import … here**, and "… iTerm2" only if a host uses `inject_via = ["iterm"]`.
 
 ## Uninstall
 

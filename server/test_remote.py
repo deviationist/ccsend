@@ -189,6 +189,79 @@ class Remote(unittest.TestCase):
         self.assertFalse(out["ok"])
         self.assertEqual(os.listdir(self.p("dest")), [])
 
+    # ------------------------------------------------------------ browse / download
+
+    def make_tree(self):
+        src = self.p("dest", "proj")
+        os.makedirs(os.path.join(src, "sub"))
+        with open(os.path.join(src, "a.txt"), "w") as f:
+            f.write("hello")
+        with open(os.path.join(src, "sub", "b.bin"), "wb") as f:
+            f.write(b"\0" * 1000)
+        with open(os.path.join(src, ".env"), "w") as f:
+            f.write("SECRET=1")
+        os.symlink("/etc/passwd", os.path.join(src, "passwd-link"))
+        os.mkfifo(os.path.join(src, "fifo"))
+        os.makedirs(os.path.join(src, "node_modules", "x"))
+        with open(os.path.join(src, "node_modules", "x", "i.js"), "w") as f:
+            f.write("x")
+        return src
+
+    def run_download(self, req):
+        env = dict(os.environ, HOME=self.home)
+        r = dict(req, cmd="download", id="selftest")
+        p = subprocess.run([sys.executable, "-c", BOOTSTRAP, b64(SCRIPT), b64(json.dumps(r).encode())],
+                           capture_output=True, env=env, timeout=30)
+        line = [l for l in p.stderr.decode().splitlines() if l.startswith("CCSEND-RESULT ")]
+        return json.loads(line[-1][len("CCSEND-RESULT "):]) if line else None, p.stdout
+
+    def test_browse(self):
+        self.make_tree()
+        out = self.run_remote({"cmd": "browse", "dir": "~/dest/proj", "roots": ["~"]})
+        kinds = {e["name"]: e["kind"] for e in out["entries"]}
+        self.assertEqual(kinds, {"a.txt": "file", "sub": "dir", "passwd-link": "link", "fifo": "other", "node_modules": "dir"})
+        out = self.run_remote({"cmd": "browse", "dir": "~/dest/proj", "roots": ["~"], "hidden": True})
+        self.assertIn(".env", [e["name"] for e in out["entries"]])
+        self.assertEqual(out["parent"], self.p("dest"))
+        self.assertFalse(self.run_remote({"cmd": "browse", "dir": "/etc", "roots": ["~"]})["ok"])
+        self.assertEqual(self.run_remote({"cmd": "browse", "dir": "~", "roots": ["~"]})["parent"], "")
+
+    def test_download_dry_run(self):
+        self.make_tree()
+        base = {"cmd": "download", "dir": "~/dest", "names": ["proj"], "roots": ["~"], "dry_run": True}
+        out = self.run_remote(dict(base, excludes=["node_modules"]))
+        self.assertEqual((out["files"], out["bytes"], out["skipped_links"], out["skipped_special"],
+                          out["skipped_hidden"], out["skipped_excluded"]), (2, 1005, 1, 1, 1, 1))
+        out = self.run_remote(dict(base, hidden=True, symlinks=True))
+        self.assertEqual((out["files"], out["skipped_links"], out["skipped_hidden"]), (5, 0, 0))
+        # A named entry is sent even if it is hidden or excluded.
+        out = self.run_remote(dict(base, dir="~/dest/proj", names=[".env", "node_modules"], excludes=["node_modules"]))
+        self.assertEqual(out["files"], 2)
+
+    def test_download_stream(self):
+        self.make_tree()
+        res, data = self.run_download({"dir": "~/dest", "names": ["proj"], "roots": ["~"], "excludes": ["node_modules"]})
+        self.assertTrue(res["ok"], res)
+        with tarfile.open(fileobj=io.BytesIO(data), mode="r:") as tar:
+            members = {m.name: m for m in tar.getmembers()}
+            self.assertEqual(set(members), {"proj", "proj/a.txt", "proj/sub", "proj/sub/b.bin"})
+            self.assertEqual(tar.extractfile(members["proj/a.txt"]).read(), b"hello")
+            for m in members.values():
+                self.assertEqual((m.uid, m.gid, m.uname, m.gname), (0, 0, "", ""), m.name)
+                self.assertEqual(m.mode & 0o7000, 0)
+
+    def test_download_refusals(self):
+        self.make_tree()
+        for req in ({"dir": "/etc", "names": ["passwd"]}, {"dir": "~/dest", "names": ["../x"]},
+                    {"dir": "~/dest", "names": ["missing"]}, {"dir": "~/dest", "names": []},
+                    {"dir": "~/dest", "names": ["proj", "proj"]}):
+            res, data = self.run_download(dict(req, roots=["~"]))
+            self.assertFalse(res["ok"], req)
+            self.assertEqual(data, b"", req)
+        res, data = self.run_download({"dir": "~/dest", "names": ["proj"], "roots": ["~"], "max_bytes": 10})
+        self.assertFalse(res["ok"])
+        self.assertEqual(data, b"")
+
     # ------------------------------------------------------------ inject
 
     def test_inject_refusals_without_tmux(self):

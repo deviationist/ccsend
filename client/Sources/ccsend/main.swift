@@ -3,6 +3,7 @@ import Foundation
 let usage = """
 usage:
   ccsend ui [--host HOST] [--] FILE...        the send window (what the Quick Actions run)
+  ccsend ui-import --host HOST [--to DIR | --finder] [-- ITEM...]   the import window
   ccsend send HOST DEST [options] FILE...      send without a window
         DEST: claude (newest Claude session) | claude:DIR (the Claude session in DIR)
               shell (newest SSH shell) | shell:DIR | default | /path | ~/path
@@ -10,6 +11,10 @@ usage:
         --all         do not apply the exclude list
         --yes         send even when over the configured limits
         --no-inject   do not type the path into the Claude prompt (when the host has inject on)
+  ccsend import HOST [options] REMOTE_PATH...  fetch files or folders (same parent folder) into --to DIR
+        --to DIR      Mac folder to import into (default: the current folder)
+        --hidden / --all / --links / --yes   hidden files, no excludes, keep links, over limits
+                      (only for hosts with import = true)
   ccsend sessions HOST                         list the host's Claude sessions and SSH shells
   ccsend check                                 validate the config and test every host
   ccsend log [--host HOST] [-n N]              last N events from the Mac log, or from HOST's journal
@@ -108,6 +113,53 @@ func cmdSend(_ args: [String]) throws {
     }
 }
 
+func cmdImport(_ args: [String]) throws {
+    guard let hostName = args.first else { fail(usage) }
+    var rest = Array(args.dropFirst()), opts: Set<String> = [], to = FileManager.default.currentDirectoryPath
+    while let a = rest.first, a.hasPrefix("--") {
+        if a == "--to", rest.count >= 2 { to = rest[1]; rest.removeFirst(2); continue }
+        guard ["--hidden", "--all", "--links", "--yes"].contains(a) else { fail(usage) }
+        opts.insert(a); rest.removeFirst()
+    }
+    if rest.first == "--" { rest.removeFirst() }
+    guard !rest.isEmpty else { fail(usage) }
+    let config = try Config.load()
+    let host = try config.host(hostName)
+    guard host.importEnabled else { fail("import is off for \(host.name); set import = true in its [hosts.\(host.name)] table") }
+    let paths = rest
+    // Remote paths: split at the last "/" ourselves (no Mac path handling, no ~ expansion).
+    func split(_ p: String) -> (String, String)? {
+        var p = p
+        while p.count > 1 && p.hasSuffix("/") { p.removeLast() }
+        guard let i = p.lastIndex(of: "/") else { return nil }
+        let parent = i == p.startIndex ? "/" : String(p[..<i])
+        return (parent, String(p[p.index(after: i)...]))
+    }
+    let pairs = paths.compactMap(split)
+    guard pairs.count == paths.count, Set(pairs.map(\.0)).count == 1 else { fail("import paths must share one parent folder") }
+    let dir = pairs[0].0
+    let names = pairs.map(\.1)
+    let dest = URL(fileURLWithPath: to).standardizedFileURL.path
+    var isDir: ObjCBool = false
+    guard FileManager.default.fileExists(atPath: dest, isDirectory: &isDir), isDir.boolValue else { fail("\(dest) is not a folder") }
+
+    let ssh = SSH(host: host, controlPath: nil)
+    let o = Remote.DownloadOptions(hidden: opts.contains("--hidden"), excludes: opts.contains("--all") ? [] : config.excludes,
+                                   symlinks: host.importSymlinks || opts.contains("--links"))
+    let plan = try Remote.downloadPlan(ssh, dir: dir, names: names, o)
+    print("\(names.count) item(s), \(plan.files) file(s), \(ByteCountFormatter.string(fromByteCount: plan.bytes, countStyle: .file))"
+          + "; skipped \(plan.skippedHidden) hidden, \(plan.skippedExcluded) excluded, \(plan.skippedLinks) links")
+    let maxBytes = Int64(config.maxTotalMB) << 20
+    if !opts.contains("--yes") && (plan.bytes > maxBytes || plan.files > config.maxFiles) {
+        fail("over the configured limits (max_total_mb=\(config.maxTotalMB), max_files=\(config.maxFiles)); add --yes")
+    }
+    try Importer.checkSpace(dest, bytes: plan.bytes)
+    let imp = Importer(dest: dest, tops: names, allowSymlinks: o.symlinks,
+                       maxBytes: max(plan.bytes, 1) + (1 << 20), maxFiles: plan.files + 100)
+    try Remote.download(ssh, dir: dir, names: names, o, maxBytes: imp.maxBytes, maxFiles: imp.maxFiles, consume: imp.consume)
+    for p in imp.localPaths { print(p) }
+}
+
 func cmdSessions(_ name: String) throws {
     let config = try Config.load()
     let host = try config.host(name)
@@ -179,7 +231,9 @@ let argv = Array(CommandLine.arguments.dropFirst())
 do {
     switch argv.first {
     case "ui": try UI.run(Array(argv.dropFirst()))
+    case "ui-import": try UI.runImport(Array(argv.dropFirst()))
     case "send": try cmdSend(Array(argv.dropFirst()))
+    case "import": try cmdImport(Array(argv.dropFirst()))
     case "sessions" where argv.count == 2: try cmdSessions(argv[1])
     case "check": try cmdCheck()
     case "log": try cmdLog(Array(argv.dropFirst()))

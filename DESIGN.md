@@ -149,6 +149,18 @@ All arguments arrive as one base64 JSON object. Output is JSON lines.
   connection must go to the address this host's alias resolves to, and ssh
   must be the foreground job of its terminal; text and tty reach AppleScript
   as arguments, never as script source.
+- `browse {dir, hidden, roots=import_roots}` and `download {dir, names, roots,
+  symlinks, hidden, excludes, dry_run, max_bytes, max_files}` (opt-in,
+  `import = true`). The host walks the named entries without following links
+  and streams a pax tar on stdout, with the result on stderr. It strips owner
+  names, ids and setuid/setgid bits, and skips special files, and links unless
+  allowed. The Mac does not trust that stream (`Import.swift`). It accepts only
+  regular files, directories and (if allowed) links, rejects absolute paths,
+  `..` and names outside the requested tops, and claims top-level names
+  without overwriting. It writes only inside directories it created itself, so
+  never through a link. It caps bytes and files while streaming, checks free
+  space first, sets `com.apple.quarantine` on every file, and removes
+  everything it created on any failure.
 - `upload {dir, allowed_roots}` with a tar stream on stdin → writes entries,
   prints `{dir}` then `{top}` per top-level item written.
 

@@ -111,8 +111,8 @@ enum Remote {
 
     struct Entry: Hashable { let name: String; let isDir: Bool }
 
-    static func list(_ ssh: SSH, dir: String, prefix: String) throws -> (dir: String, entries: [Entry]) {
-        let o = try call(ssh, ["cmd": "list", "dir": dir, "prefix": prefix, "roots": ssh.host.allowedRoots], timeout: 10)
+    static func list(_ ssh: SSH, dir: String, prefix: String, roots: [String]? = nil) throws -> (dir: String, entries: [Entry]) {
+        let o = try call(ssh, ["cmd": "list", "dir": dir, "prefix": prefix, "roots": roots ?? ssh.host.allowedRoots], timeout: 10)
         guard let d = o["dir"] as? String, Check.path(d) else { throw RemoteError("bad dir in response") }
         var out: [Entry] = []
         for e in (o["entries"] as? [[String: Any]] ?? []).prefix(200) {
@@ -131,6 +131,81 @@ enum Remote {
     /// The host re-confirms claude is still in the foreground of that SSH terminal (iTerm adapter).
     static func foreground(_ ssh: SSH, _ s: Session) throws {
         _ = try call(ssh, ["cmd": "foreground", "pid": s.pid, "ssh_port": s.sshPort], timeout: 10)
+    }
+
+    // MARK: import
+
+    struct RemoteEntry: Identifiable, Hashable {
+        enum Kind: String { case file, dir, link, other }
+        let name: String
+        let kind: Kind
+        let size: Int64
+        let mtime: Date
+        var id: String { name }
+    }
+
+    static func browse(_ ssh: SSH, dir: String, hidden: Bool) throws -> (dir: String, parent: String, entries: [RemoteEntry]) {
+        let o = try call(ssh, ["cmd": "browse", "dir": dir, "hidden": hidden, "roots": ssh.host.importRoots], timeout: 15)
+        guard let d = o["dir"] as? String, Check.path(d) else { throw RemoteError("bad dir in response") }
+        let parent = (o["parent"] as? String).flatMap { Check.path($0) ? $0 : nil } ?? ""
+        var out: [RemoteEntry] = []
+        for e in (o["entries"] as? [[String: Any]] ?? []).prefix(5000) {
+            guard let n = e["name"] as? String, Check.name(n),
+                  let k = (e["kind"] as? String).flatMap(RemoteEntry.Kind.init(rawValue:)) else { continue }
+            out.append(RemoteEntry(name: n, kind: k, size: Int64(e["size"] as? Int ?? 0),
+                                   mtime: Date(timeIntervalSince1970: TimeInterval(e["mtime"] as? Int ?? 0))))
+        }
+        return (d, parent, out)
+    }
+
+    struct DownloadPlan { var files = 0; var bytes: Int64 = 0; var skippedLinks = 0, skippedSpecial = 0, skippedHidden = 0, skippedExcluded = 0 }
+
+    struct DownloadOptions { var hidden: Bool; var excludes: [String]; var symlinks: Bool }
+
+    static func downloadRequest(_ ssh: SSH, dir: String, names: [String], _ o: DownloadOptions) -> [String: Any] {
+        ["cmd": "download", "dir": dir, "names": names, "roots": ssh.host.importRoots, "hidden": o.hidden,
+         "excludes": o.excludes, "symlinks": o.symlinks]
+    }
+
+    static func downloadPlan(_ ssh: SSH, dir: String, names: [String], _ o: DownloadOptions) throws -> DownloadPlan {
+        var req = downloadRequest(ssh, dir: dir, names: names, o)
+        req["dry_run"] = true
+        let r = try call(ssh, req, timeout: 60)
+        return DownloadPlan(files: r["files"] as? Int ?? 0, bytes: Int64(r["bytes"] as? Int ?? 0),
+                            skippedLinks: r["skipped_links"] as? Int ?? 0, skippedSpecial: r["skipped_special"] as? Int ?? 0,
+                            skippedHidden: r["skipped_hidden"] as? Int ?? 0, skippedExcluded: r["skipped_excluded"] as? Int ?? 0)
+    }
+
+    /// Stream the selection into `consume` (an Importer); the host's result arrives on stderr.
+    static func download(_ ssh: SSH, dir: String, names: [String], _ o: DownloadOptions, maxBytes: Int64, maxFiles: Int,
+                         consume: (FileHandle) throws -> Void) throws {
+        let id = Log.newID(), start = Date()
+        var req = downloadRequest(ssh, dir: dir, names: names, o)
+        req["max_bytes"] = maxBytes
+        req["max_files"] = maxFiles
+        req["id"] = id
+        req["win"] = Log.run
+        req["log_names"] = Log.logNames
+        func ms() -> String { String(Int(Date().timeIntervalSince(start) * 1000)) }
+        do {
+            let r = try ssh.stream(try command(req), timeout: 3600, consume: consume)
+            let lines = String(decoding: r.stderr.suffix(1 << 16), as: UTF8.self).split(separator: "\n")
+            guard let line = lines.last(where: { $0.hasPrefix("CCSEND-RESULT ") }),
+                  let obj = try? JSONSerialization.jsonObject(with: Data(line.dropFirst("CCSEND-RESULT ".count).utf8)) as? [String: Any],
+                  let ok = obj["ok"] as? Bool else {
+                throw RemoteError("\(ssh.host.label): download failed: \(r.stderrText)")
+            }
+            guard ok else { throw RemoteError("\(ssh.host.label): \(Display.clean(obj["error"] as? String ?? "refused"))") }
+            var f: [(String, String)] = [("id", id), ("event", "download"), ("host", ssh.host.name), ("result", "ok"), ("ms", ms()),
+                                         ("dir", Log.value(dir)), ("items", String(names.count)),
+                                         ("files", String(obj["files"] as? Int ?? 0)), ("bytes", String(obj["bytes"] as? Int ?? 0))]
+            if Log.logNames { f.append(("names", Log.names(names))) }
+            Log.event(f)
+        } catch {
+            Log.event([("id", id), ("event", "download"), ("host", ssh.host.name), ("result", "error"), ("ms", ms()),
+                       ("error", Log.value(String("\(error)".prefix(300))))])
+            throw error
+        }
     }
 
     struct Written { let sent: String; let name: String }

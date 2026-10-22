@@ -11,7 +11,7 @@
 	<key>CFBundleVersion</key><string>1</string>
 	<key>LSMinimumSystemVersion</key><string>15.0</string>
 	<key>LSUIElement</key><true/>
-	<key>NSAppleEventsUsageDescription</key><string>ccsend types the uploaded file's path into the Claude Code session in your iTerm2 tab (only when inject_via includes "iterm").</string>
+	<key>NSAppleEventsUsageDescription</key><string>ccsend asks Finder which folder is open (for "Import … here") and, if inject_via includes "iterm", types the uploaded file's path into the Claude Code session in your iTerm2 tab.</string>
 	<key>NSDesktopFolderUsageDescription</key><string>ccsend reads the files you choose to send to your SSH hosts.</string>
 	<key>NSDownloadsFolderUsageDescription</key><string>ccsend reads the files you choose to send to your SSH hosts.</string>
 	<key>NSDocumentsFolderUsageDescription</key><string>ccsend reads the files you choose to send to your SSH hosts.</string>

@@ -16,6 +16,7 @@ relevant.
 | `client/Sources/ccsend/Remote.swift` | Calls into `server/remote.py`; checks every response (`Check`, `Display`) |
 | `client/Sources/ccsend/Transfer.swift` | Selection walk + filters (`Plan`), pax tar writer, shell escaping |
 | `client/Sources/ccsend/Inject.swift` | Typing the path into a Claude prompt: tmux and iTerm adapters |
+| `client/Sources/ccsend/Import.swift` | Unpacking an import stream from a host: the untrusted-archive rules live here |
 | `client/Sources/ccsend/Install.swift` | Generates `~/Library/Services/*.workflow` from the config |
 | `client/Sources/ccsend/UI/` | Window: `Model.swift` (state, SSH work off the main thread), `SendView.swift` |
 | `client/Sources/ccsend/SelfTest.swift` | `ccsend selftest`: pure-logic checks |
@@ -58,6 +59,10 @@ by make and is gitignored. Never edit it.
   reaches a terminal.
 - **Writes stay inside `allowed_roots`, are never overwrites (O_EXCL), and roll back on failure.**
 - **Symlinks inside sent folders are sent as links, never followed.**
+- **Import is opt-in** (`import = false` by default) **and the stream is untrusted:**
+  `Importer` writes only inside directories it created, never overwrites,
+  quarantines every file and rolls back on failure. `selftest` feeds it
+  hostile archives; keep that list growing.
 - **Injection is opt-in** (`inject = "off"` by default) **and never types into a shell.**
   tmux: the pane must run that claude pid. iTerm: the connection must go to
   this host's address, ssh must be in the foreground, and the host must

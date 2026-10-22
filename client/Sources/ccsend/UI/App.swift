@@ -1,7 +1,8 @@
 import AppKit
 import SwiftUI
 
-/// `ccsend ui [--host HOST] [--] FILE...`: the send window.
+/// The windows: `ccsend ui [--host H] -- FILE...` (send) and
+/// `ccsend ui-import --host H [--to DIR | --finder] [-- ITEM...]` (import).
 enum UI {
     static func run(_ args: [String]) throws {
         var rest = args, hostName: String?
@@ -12,17 +13,69 @@ enum UI {
         }
         if rest.first == "--" { rest.removeFirst() }
         let files = rest.map { URL(fileURLWithPath: $0).standardizedFileURL.path }
+        start(title: "ccsend") {
+            guard !files.isEmpty else { throw RemoteError("select one or more files or folders in Finder first") }
+            let config = try Config.load()
+            let host = try hostName.map(config.host) ?? config.hosts[0]
+            let model = SendModel(config: config, host: host, files: files)
+            return (AnyView(SendView(model: model)), model.close)
+        }
+    }
 
+    static func runImport(_ args: [String]) throws {
+        var rest = args, hostName: String?, to: String?, finder = false
+        while let a = rest.first, a != "--" {
+            if a == "--host", rest.count >= 2 { hostName = rest[1]; rest.removeFirst(2) }
+            else if a == "--to", rest.count >= 2 { to = rest[1]; rest.removeFirst(2) }
+            else if a == "--finder" { finder = true; rest.removeFirst() }
+            else { break }
+        }
+        if rest.first == "--" { rest.removeFirst() }
+        start(title: "ccsend import") {
+            let config = try Config.load()
+            let host = try hostName.map(config.host) ?? (config.hosts.first(where: \.importEnabled) ?? config.hosts[0])
+            guard host.importEnabled else { throw RemoteError("import is off for \(host.name); set import = true in its config") }
+            let dest = try destination(items: rest, to: to, finder: finder)
+            let model = ImportModel(config: config, host: host, dest: dest)
+            return (AnyView(ImportView(model: model)), model.close)
+        }
+    }
+
+    /// Where an import lands: --to, else the selected folder (a selected file's
+    /// folder), else the front Finder window, else the Desktop.
+    static func destination(items: [String], to: String?, finder: Bool) throws -> String {
+        let fm = FileManager.default
+        func folder(_ p: String) -> String? {
+            var d: ObjCBool = false
+            let path = URL(fileURLWithPath: p).standardizedFileURL.path
+            guard fm.fileExists(atPath: path, isDirectory: &d) else { return nil }
+            return d.boolValue ? path : (path as NSString).deletingLastPathComponent
+        }
+        if let to, let f = folder(to) { return f }
+        if let first = items.first, let f = folder(first) { return f }
+        if finder {
+            let script = NSAppleScript(source: """
+            tell application "Finder"
+                if (count of Finder windows) > 0 then return POSIX path of (target of front Finder window as alias)
+            end tell
+            return ""
+            """)
+            var err: NSDictionary?
+            if let p = script?.executeAndReturnError(&err).stringValue, !p.isEmpty, let f = folder(p) { return f }
+        }
+        return fm.homeDirectoryForCurrentUser.appendingPathComponent("Desktop").path
+    }
+
+    private static func start(title: String, _ make: @escaping () throws -> (AnyView, () -> Void)) {
         let app = NSApplication.shared
         app.setActivationPolicy(.accessory)
         let delegate = AppDelegate()
         app.delegate = delegate
-
         do {
-            guard !files.isEmpty else { throw RemoteError("select one or more files or folders in Finder first") }
-            let config = try Config.load()
-            let host = try hostName.map(config.host) ?? config.hosts[0]
-            delegate.model = SendModel(config: config, host: host, files: files)
+            let (view, close) = try make()
+            delegate.root = view
+            delegate.onClose = close
+            delegate.title = title
         } catch {
             // No window to put it in yet: a plain alert, then quit.
             app.activate(ignoringOtherApps: true)
@@ -32,19 +85,21 @@ enum UI {
             alert.runModal()
             exit(1)
         }
-        app.run()
+        withExtendedLifetime(delegate) { app.run() }
     }
 }
 
 final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
-    var model: SendModel!
+    var root: AnyView!
+    var onClose: () -> Void = {}
+    var title = "ccsend"
     var window: NSWindow!
 
     func applicationDidFinishLaunching(_ n: Notification) {
-        let view = NSHostingView(rootView: SendView(model: model))
+        let view = NSHostingView(rootView: root)
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 600, height: 380),
                           styleMask: [.titled, .closable], backing: .buffered, defer: false)
-        window.title = "ccsend"
+        window.title = title
         window.contentView = view
         window.delegate = self
         window.level = .floating
@@ -76,6 +131,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func windowWillClose(_ n: Notification) { NSApp.terminate(nil) }
-    func applicationWillTerminate(_ n: Notification) { model?.close() }
+    func applicationWillTerminate(_ n: Notification) { onClose() }
     func applicationShouldTerminateAfterLastWindowClosed(_ app: NSApplication) -> Bool { true }
 }

@@ -4,6 +4,33 @@ import Foundation
 /// State of one send window. All SSH work runs off the main thread; results
 /// are published back on it. Strings from the host reach the view only
 /// through Check/Display and are rendered verbatim.
+/// Tab completion of a remote path, shared by the send and import windows.
+enum Completion {
+    struct Result { var text: String?; var candidates: [Remote.Entry] = []; var note = ""; var beep = false }
+
+    static func complete(_ input: String, ssh: SSH, roots: [String]) -> Result {
+        var text = input
+        if text.isEmpty || text == "~" { text = "~/" }
+        guard text.hasPrefix("/") || text.hasPrefix("~/") else { return Result(text: nil, note: "paths start with ~/ or /") }
+        let slash = text.range(of: "/", options: .backwards)!
+        let dirPart = String(text[..<slash.upperBound])
+        let prefix = String(text[slash.upperBound...])
+        do {
+            let (_, entries) = try Remote.list(ssh, dir: dirPart, prefix: prefix, roots: roots)
+            if entries.isEmpty { return Result(text: text == input ? nil : text, beep: true) }
+            if entries.count == 1 {
+                let e = entries[0]
+                return Result(text: dirPart + e.name + (e.isDir ? "/" : ""))
+            }
+            let common = entries.map(\.name).reduce(entries[0].name) { $0.commonPrefix(with: $1) }
+            if common.count > prefix.count { return Result(text: dirPart + common) }
+            return Result(text: text == input ? nil : text, candidates: entries)
+        } catch {
+            return Result(text: nil, note: Display.clean("\(error)"))
+        }
+    }
+}
+
 final class SendModel: ObservableObject {
     enum Phase: Equatable { case connecting, ready, sending, done, failed(String) }
 
@@ -213,43 +240,21 @@ final class SendModel: ObservableObject {
     /// zsh-like: complete the last path component against a remote listing.
     func complete() {
         guard let ssh, phase == .ready else { return }
-        var text = path
-        if text.isEmpty || text == "~" { text = "~/" }
-        guard text.hasPrefix("/") || text.hasPrefix("~/") else {
-            completionNote = "paths start with ~/ or /"
-            return
-        }
-        let slash = text.range(of: "/", options: .backwards)!
-        let dirPart = String(text[..<slash.upperBound])
-        let prefix = String(text[slash.upperBound...])
-        let gen = generation
+        let text = path, gen = generation, roots = host.allowedRoots
         work.async {
-            let r = Result { try Remote.list(ssh, dir: dirPart, prefix: prefix) }
+            let r = Completion.complete(text, ssh: ssh, roots: roots)
             DispatchQueue.main.async {
-                guard gen == self.generation, self.path == text || self.path == "~" || self.path.isEmpty else { return }
-                switch r {
-                case .failure(let e):
-                    self.candidates = []
-                    self.completionNote = Display.clean("\(e)")
-                case .success(let (_, entries)):
-                    self.completionNote = ""
-                    if entries.isEmpty { NSSound.beep(); self.candidates = []; return }
-                    if entries.count == 1 {
-                        let e = entries[0]
-                        self.path = dirPart + e.name + (e.isDir ? "/" : "")
-                        self.candidates = []
-                        return
-                    }
-                    let common = entries.map(\.name).reduce(entries[0].name) { $0.commonPrefix(with: $1) }
-                    if common.count > prefix.count {
-                        self.path = dirPart + common
-                        self.candidates = []
-                    } else {
-                        self.candidates = entries
-                    }
-                }
+                guard gen == self.generation, self.path == text else { return }
+                self.apply(r)
             }
         }
+    }
+
+    private func apply(_ r: Completion.Result) {
+        completionNote = r.note
+        candidates = r.candidates
+        if let t = r.text { path = t }
+        if r.beep { NSSound.beep() }
     }
 
     func pick(_ e: Remote.Entry) {
