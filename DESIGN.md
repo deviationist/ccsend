@@ -141,6 +141,14 @@ All arguments arrive as one base64 JSON object. Output is JSON lines.
   control characters. It never types into a shell. Claude outside tmux is
   not supported: injecting into another terminal (`TIOCSTI`) is disabled on
   modern kernels.
+- `foreground {pid, ssh_port}` (iTerm adapter): the host re-confirms right
+  before typing that `pid` is the user's `claude` and is the foreground
+  process group of the SSH terminal with that client port. The port comes
+  from the terminal's session leader (the login shell sshd started), not
+  from Claude's own environment. On the Mac, the matching local ssh
+  connection must go to the address this host's alias resolves to, and ssh
+  must be the foreground job of its terminal; text and tty reach AppleScript
+  as arguments, never as script source.
 - `upload {dir, allowed_roots}` with a tar stream on stdin → writes entries,
   prints `{dir}` then `{top}` per top-level item written.
 

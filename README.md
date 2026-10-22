@@ -71,16 +71,29 @@ allowed_roots = ["~"]        # uploads must resolve inside these, checked on the
 inject = "off"               # opt-in, see below
 ```
 
-### Typing the path into Claude (opt-in, tmux only)
+### Typing the path into Claude (opt-in)
 
-With `inject = "type"` on a host, sending to a Claude Code session that runs
-inside tmux also pastes the remote path into that session's prompt, so you
-only add your message. `inject = "submit"` also presses Enter. The window has
-a checkbox to skip it for one send. The CLI has `--no-inject`.
+With `inject = "type"` on a host, sending to a Claude Code session also types
+the remote path into that session's prompt, so you only add your message.
+`inject = "submit"` also presses Enter. The window has a checkbox to skip it
+for one send; the CLI has `--no-inject`.
 
-Before pasting, the host checks that the pane really runs that `claude`
-process; it never types into a shell. Sessions outside tmux are not
-supported: the path is only copied to the clipboard, as always.
+`inject_via` lists the adapters to try, in order (default `["tmux"]`):
+
+- `tmux`: for Claude running inside tmux. The host pastes into the session's
+  pane after checking that the pane really runs that `claude` process.
+- `iterm`: for Claude running directly in an SSH session in an iTerm2 tab.
+  The host reports which SSH connection Claude is in the foreground of. The
+  Mac finds that connection's tab (only if it goes to this host's address and
+  ssh is the tab's foreground job). The host then re-confirms Claude is still
+  in the foreground, and the Mac types the path with iTerm2's scripting.
+  macOS asks once whether ccsend may control iTerm2.
+
+Neither adapter ever types into a shell. If no adapter fits, the path is only
+copied to the clipboard, as always.
+
+Target one session exactly from the CLI with `claude:DIR`:
+`ccsend send devbox claude:~/myapp shot.png`.
 
 ## Command line
 

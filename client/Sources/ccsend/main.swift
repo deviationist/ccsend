@@ -4,7 +4,8 @@ let usage = """
 usage:
   ccsend ui [--host HOST] [--] FILE...        the send window (what the Quick Actions run)
   ccsend send HOST DEST [options] FILE...      send without a window
-        DEST: claude (newest Claude session) | shell (newest SSH shell) | default | /path | ~/path
+        DEST: claude (newest Claude session) | claude:DIR (the Claude session in DIR)
+              shell (newest SSH shell) | shell:DIR | default | /path | ~/path
         --hidden      include hidden files in folders
         --all         do not apply the exclude list
         --yes         send even when over the configured limits
@@ -62,9 +63,23 @@ func cmdSend(_ args: [String]) throws {
     let ssh = SSH(host: host, controlPath: nil)
     var dir = dest, create = false, target: Remote.Session?
     switch dest {
-    case "claude", "shell":
-        let d = try Remote.discover(ssh)
-        guard let s = d.sessions.first(where: { $0.kind.rawValue == dest }) else { fail("no \(dest) session on \(host.label)") }
+    case let d where d == "claude" || d == "shell" || d.hasPrefix("claude:") || d.hasPrefix("shell:"):
+        // kind, or kind:DIR to pick exactly one session by its working directory.
+        let parts = d.split(separator: ":", maxSplits: 1).map(String.init)
+        let kind = parts[0]
+        let disc = try Remote.discover(ssh)
+        var matches = disc.sessions.filter { $0.kind.rawValue == kind }
+        if parts.count == 2 {
+            var want = parts[1]
+            if want == "~" { want = disc.home } else if want.hasPrefix("~/") { want = disc.home + want.dropFirst(1) }
+            while want.count > 1 && want.hasSuffix("/") { want.removeLast() }
+            matches = matches.filter { $0.cwd == want }
+            guard matches.count == 1 else {
+                fail(matches.isEmpty ? "no \(kind) session in \(parts[1]) on \(host.label)"
+                                     : "\(matches.count) \(kind) sessions in \(parts[1]) on \(host.label); not choosing one")
+            }
+        }
+        guard let s = matches.first else { fail("no \(kind) session on \(host.label)") }
         dir = s.cwd
         target = s
     case "default":
@@ -79,12 +94,12 @@ func cmdSend(_ args: [String]) throws {
     print("sent to \(host.label):\(r.dir)")
     print(r.clipboard)
     if let s = target, s.kind == .claude, host.inject != .off, !opts.contains("--no-inject") {
-        if s.pane.isEmpty {
-            print("not typed into Claude: that session is not in tmux (path is on the clipboard)")
+        if Injector.adapter(for: s, host: host) == nil {
+            print("not typed into Claude: no adapter in inject_via fits that session (path is on the clipboard)")
         } else {
             do {
-                try Remote.inject(ssh, into: s, text: r.clipboard + " ", submit: host.inject == .submit)
-                print(host.inject == .submit ? "typed into Claude and submitted" : "typed into the Claude prompt")
+                let via = try Injector.inject(ssh, into: s, text: r.clipboard + " ")
+                print((host.inject == .submit ? "typed into Claude and submitted" : "typed into the Claude prompt") + " via \(via.rawValue)")
             } catch {
                 print("not typed into Claude: \(error) (path is on the clipboard)")
             }

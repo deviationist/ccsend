@@ -187,6 +187,7 @@ struct HostConfig {
     var customPath = true
     var allowedRoots = ["~"]
     var inject = Inject.off
+    var injectVia: [Injector.Adapter] = [.tmux]
 }
 
 struct Config {
@@ -307,6 +308,13 @@ struct Config {
                     guard let i = Inject(rawValue: s) else { throw ConfigError("[\(n)]: inject must be \"off\", \"type\" or \"submit\"") }
                     h.inject = i
                 }
+                if let (v, l) = take("inject_via") {
+                    guard case .strings(let a) = v, !a.isEmpty else { throw ConfigError("line \(l): inject_via must be a list like [\"tmux\", \"iterm\"]") }
+                    h.injectVia = try a.map { s in
+                        guard let ad = Injector.Adapter(rawValue: s) else { throw ConfigError("line \(l): unknown inject adapter \"\(s)\" (tmux, iterm)") }
+                        return ad
+                    }
+                }
                 try validate(h)
                 c.hosts.append(h)
             default:
@@ -386,7 +394,8 @@ struct Config {
             default_location = "~/inbox" # "" turns the Default destination off
             custom_path = true           # "Path" destination with Tab completion
             allowed_roots = ["~"]        # destinations must resolve inside these (checked on the host)
-            inject = "off"               # Claude in tmux only: "type" pastes the path into its prompt, "submit" also presses Enter
+            inject = "off"               # opt-in: "type" puts the path in the Claude prompt, "submit" also presses Enter
+            inject_via = ["tmux"]        # adapters, tried in order: "tmux" (host-side), "iterm" (Mac types into the iTerm2 tab)
 
             """
         }

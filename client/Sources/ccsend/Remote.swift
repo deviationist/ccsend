@@ -74,6 +74,7 @@ enum Remote {
         let tmux: String
         let pane: String       // tmux pane id ("%3") for Claude in tmux, else ""
         let pid: Int
+        let sshPort: Int       // client port of the SSH connection Claude is in the foreground of, else 0
         let started: Date
         var id: String { "\(kind.rawValue):\(cwd):\(tmux):\(started.timeIntervalSince1970)" }
     }
@@ -95,7 +96,9 @@ enum Remote {
             let started = Date(timeIntervalSince1970: TimeInterval(s["started"] as? Int ?? 0))
             var pane = s["pane"] as? String ?? ""
             if pane.range(of: "^%[0-9]{1,6}$", options: .regularExpression) == nil { pane = "" }
-            sessions.append(Session(kind: k, cwd: cwd, tmux: tmux, pane: pane, pid: s["pid"] as? Int ?? 0, started: started))
+            let port = s["ssh_port"] as? Int ?? 0
+            sessions.append(Session(kind: k, cwd: cwd, tmux: tmux, pane: pane, pid: s["pid"] as? Int ?? 0,
+                                    sshPort: (1..<65536).contains(port) ? port : 0, started: started))
         }
         return Discovery(home: home, sessions: sessions)
     }
@@ -123,6 +126,11 @@ enum Remote {
     static func inject(_ ssh: SSH, into s: Session, text: String, submit: Bool) throws {
         guard s.kind == .claude, !s.pane.isEmpty, s.pid > 1 else { throw RemoteError("this session is not in tmux") }
         _ = try call(ssh, ["cmd": "inject", "pane": s.pane, "pid": s.pid, "text": text, "submit": submit], timeout: 15)
+    }
+
+    /// The host re-confirms claude is still in the foreground of that SSH terminal (iTerm adapter).
+    static func foreground(_ ssh: SSH, _ s: Session) throws {
+        _ = try call(ssh, ["cmd": "foreground", "pid": s.pid, "ssh_port": s.sshPort], timeout: 10)
     }
 
     struct Written { let sent: String; let name: String }

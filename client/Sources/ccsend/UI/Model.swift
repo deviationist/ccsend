@@ -269,7 +269,7 @@ final class SendModel: ObservableObject {
 
     /// Where the path will be typed after the upload, if anywhere.
     var injectTarget: Remote.Session? {
-        guard host.inject != .off, injectOn, let s = selectedClaude, !s.pane.isEmpty else { return nil }
+        guard injectOn, let s = selectedClaude, Injector.adapter(for: s, host: host) != nil else { return nil }
         return s
     }
 
@@ -302,7 +302,7 @@ final class SendModel: ObservableObject {
                 var message = "Sent. Path copied to the clipboard."
                 if let s = injectInto {
                     do {
-                        try Remote.inject(ssh, into: s, text: r.clipboard + " ", submit: submit)
+                        _ = try Injector.inject(ssh, into: s, text: r.clipboard + " ")
                         message = submit ? "Sent, typed into Claude and submitted. Also copied."
                                          : "Sent and typed into the Claude prompt. Also copied."
                     } catch {

@@ -25,6 +25,10 @@ Requests
         Paste T into tmux pane %N as a bracketed paste (and press Enter if
         submit). Only if process P is named claude, runs inside that pane, and
         T has no control characters. Opt-in on the client; never into a shell.
+    {"cmd": "foreground", "pid": P, "ssh_port": N}
+        Confirm process P is still your claude, in the foreground of the SSH
+        terminal whose client port is N. The client asks right before typing
+        into that terminal from the Mac (the iTerm adapter).
     {"cmd": "upload", "dir": D, "roots": [R...], "create": bool, "tops": [N...]}
         Read a tar stream on stdin and write it into D. Only the top-level names
         in "tops" are accepted; each is written as N, or N-1, N-2 ... if taken.
@@ -142,6 +146,27 @@ def tmux_session(env):
         return ""
 
 
+def ssh_client_port(pid, f):
+    """Client port of the SSH connection whose terminal pid is in the foreground of.
+
+    Taken from the session leader of pid's terminal (the login shell sshd
+    started), not from pid's own environment, which any process can set.
+    0 when pid is not the foreground process group of an SSH login terminal.
+    """
+    tty, pgrp, sid, tpgid = f[4], f[2], f[3], f[5]
+    if tty == "0" or pgrp != tpgid:
+        return 0
+    try:
+        lf = stat_fields(sid)
+        if lf[4] != tty or lf[3] != sid:
+            return 0
+        conn = environ(sid).get(b"SSH_CONNECTION", b"").split()
+        port = int(conn[1]) if len(conn) == 4 else 0
+        return port if 0 < port < 65536 else 0
+    except (OSError, ValueError, IndexError):
+        return 0
+
+
 def discover(req):
     if not os.path.isdir("/proc/self"):
         raise Refused("session discovery needs Linux /proc")
@@ -154,8 +179,10 @@ def discover(req):
                 continue
             f = stat_fields(pid)
             env = environ(pid)
+            pane = tmux_pane(env)
             sessions.append({"kind": "claude", "cwd": os.readlink("/proc/%s/cwd" % pid),
-                             "tmux": tmux_session(env), "pane": tmux_pane(env), "pid": int(pid),
+                             "tmux": tmux_session(env), "pane": pane, "pid": int(pid),
+                             "ssh_port": 0 if pane else ssh_client_port(pid, f),
                              "started": int(boot + int(f[19]) / hz)})
             claude_ttys.add(f[4])
         except (OSError, IndexError, ValueError):
@@ -172,7 +199,8 @@ def discover(req):
             if proc_read(fg, "comm").strip().startswith("tmux"):
                 continue  # Claude inside tmux is listed from its own process
             sessions.append({"kind": "shell", "cwd": os.readlink("/proc/%s/cwd" % fg),
-                             "tmux": "", "pane": "", "pid": int(pid), "started": int(boot + int(f[19]) / hz)})
+                             "tmux": "", "pane": "", "pid": int(pid), "ssh_port": 0,
+                             "started": int(boot + int(f[19]) / hz)})
         except (OSError, IndexError, ValueError):
             continue
     sessions.sort(key=lambda s: -s["started"])
@@ -248,6 +276,21 @@ def inject(req):
     if req.get("submit") is True:
         tmux("send-keys", "-t", pane, "Enter")
     return {"pane": pane, "submitted": req.get("submit") is True}
+
+
+def foreground(req):
+    pid, port = req.get("pid"), req.get("ssh_port")
+    if not isinstance(pid, int) or pid <= 1 or not isinstance(port, int) or not 0 < port < 65536:
+        raise Refused("invalid request")
+    p = str(pid)
+    try:
+        if os.stat("/proc/" + p).st_uid != os.getuid() or proc_read(p, "comm").strip() != "claude":
+            raise Refused("process %s is not your claude session" % p)
+        if ssh_client_port(p, stat_fields(p)) != port:
+            raise Refused("claude is no longer in the foreground of that SSH session")
+    except OSError:
+        raise Refused("claude process %s is gone" % p)
+    return {"pid": pid, "foreground": True}
 
 
 # ---------------------------------------------------------------- upload
@@ -372,7 +415,8 @@ def receive(target, tops, written, order):
 
 # ---------------------------------------------------------------- main
 
-COMMANDS = {"discover": discover, "resolve": resolve, "list": list_dir, "upload": upload, "inject": inject}
+COMMANDS = {"discover": discover, "resolve": resolve, "list": list_dir, "upload": upload, "inject": inject,
+            "foreground": foreground}
 
 
 ID_RE = re.compile(r"^[A-Za-z0-9-]{1,64}$")

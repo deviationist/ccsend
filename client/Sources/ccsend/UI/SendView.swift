@@ -198,17 +198,18 @@ struct SendView: View {
     /// Only for hosts that opted in (inject = "type" or "submit") and a selected Claude session.
     @ViewBuilder private var injectOption: some View {
         if model.host.inject != .off, let s = model.selectedClaude {
-            if s.pane.isEmpty {
-                Label { Text(verbatim: "This Claude session isn't running in tmux, so the path will only be copied.") }
-                    icon: { Image(systemName: "info.circle") }
-                    .font(.callout).foregroundStyle(.secondary)
-            } else {
+            if let via = Injector.adapter(for: s, host: model.host) {
                 Toggle(isOn: $model.injectOn) {
-                    Text(verbatim: model.host.inject == .submit
+                    Text(verbatim: (model.host.inject == .submit
                          ? "Type the path into the Claude prompt and press Enter"
-                         : "Type the path into the Claude prompt")
+                         : "Type the path into the Claude prompt") + (via == .iterm ? " (via iTerm)" : " (via tmux)"))
                 }
                 .disabled(model.phase == .sending || model.phase == .done)
+            } else {
+                Label { Text(verbatim: "No inject adapter fits this Claude session (inject_via: "
+                             + model.host.injectVia.map(\.rawValue).joined(separator: ", ") + "), so the path will only be copied.") }
+                    icon: { Image(systemName: "info.circle") }
+                    .font(.callout).foregroundStyle(.secondary)
             }
         }
     }

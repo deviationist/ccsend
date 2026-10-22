@@ -197,6 +197,13 @@ class Remote(unittest.TestCase):
                     {"pane": "%1", "pid": 2, "text": "a\x1b[2J"}, {"pane": "%1", "pid": 2, "text": ""}):
             self.assertFalse(self.run_remote(dict(req, cmd="inject"))["ok"], req)
 
+    def test_foreground_refusals(self):
+        for req in ({"pid": 1, "ssh_port": 22}, {"pid": os.getpid(), "ssh_port": 0},
+                    {"pid": "x", "ssh_port": 22}, {"pid": os.getpid(), "ssh_port": 70000}):
+            self.assertFalse(self.run_remote(dict(req, cmd="foreground"))["ok"], req)
+        # A live process that is not claude.
+        self.assertFalse(self.run_remote({"cmd": "foreground", "pid": os.getpid(), "ssh_port": 50000})["ok"])
+
     @unittest.skipUnless(sys.platform.startswith("linux") and shutil.which("tmux"), "needs Linux and tmux")
     def test_inject_into_tmux(self):
         sock = os.path.join(self.home, "tmux.sock")
