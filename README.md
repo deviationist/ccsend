@@ -19,8 +19,9 @@ nothing listens on the Mac, and the host holds no credential.
    is on the clipboard.
 
 **Import (opt-in, `import = true` per host)** works the other way round:
-right-click a folder (or a file, for its folder) → **Import from &lt;host&gt;**, or use
-**Import from &lt;host&gt; here** for the front Finder window. Browse the host,
+right-click the Desktop or empty space in a folder → **Import from &lt;host&gt;**
+(from ccsend's Finder extension), or right-click a folder → Quick Actions →
+**Import from &lt;host&gt;**. Browse the host,
 tick files and folders, and press Import. The Mac fetches them over SSH and
 shows them in Finder.
 
@@ -82,7 +83,8 @@ inject = "off"               # opt-in, see below: "type" | "submit"
 inject_via = ["tmux"]        # adapters, tried in order: "tmux", "iterm"
 import = false               # opt-in: "Import from <host>"
 import_roots = ["~"]         # what the Mac may browse and fetch on this host
-import_symlinks = false      # links inside imported folders: skipped, or kept as links
+import_symlinks = false      # symbolic links inside imported folders: skipped, or kept as links
+import_start = "home"        # where the import window opens: home | newest-claude | default | last | ~/path
 ```
 
 ### Typing the path into Claude (opt-in)
@@ -142,7 +144,9 @@ The threat model and the full set of guarantees are in [DESIGN.md](DESIGN.md).
 
 macOS asks once for each of these:
 - Access to Desktop, Downloads or Documents, the first time you send from there.
-- "ccsend wants to control Finder" for **Import … here**, and "… iTerm2" only if a host uses `inject_via = ["iterm"]`.
+- "ccsend wants to control iTerm2", only if a host uses `inject_via = ["iterm"]`.
+- The Finder extension (the right-click menu on the Desktop and in folders) may need switching on once:
+  System Settings → General → Login Items & Extensions → Finder → ccsend.
 
 ## Uninstall
 

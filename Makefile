@@ -19,12 +19,20 @@ $(GEN): server/remote.py
 	@printf '// Generated from server/remote.py by make. Do not edit.\nenum RemoteScript {\n    static let base64 = "%s"\n}\n' \
 		"$$(base64 < server/remote.py | tr -d '\n')" > $@
 
-$(APP): $(GEN) $(shell find client/Sources -name '*.swift') client/Package.swift client/Info.plist
+APPEX    := $(APP)/Contents/PlugIns/ccsendFinder.appex
+
+$(APP): $(GEN) $(shell find client/Sources client/Finder -name '*.swift' -o -name '*.plist') client/Package.swift client/Info.plist
 	cd client && swift build -c release --product ccsend
 	rm -rf $(APP)
-	mkdir -p $(APP)/Contents/MacOS
+	mkdir -p $(APP)/Contents/MacOS $(APPEX)/Contents/MacOS
 	sed 's/__BUNDLE_ID__/$(BUNDLE_ID)/' client/Info.plist > $(APP)/Contents/Info.plist
 	cp client/.build/release/ccsend $(BIN)
+	# Finder extension (right-click menu on the Desktop and inside folders)
+	sed 's/__BUNDLE_ID__/$(BUNDLE_ID)/' client/Finder/Info.plist > $(APPEX)/Contents/Info.plist
+	swiftc -O -parse-as-library -application-extension -module-name ccsendFinder \
+		-target $$(uname -m)-apple-macos15.0 -framework FinderSync \
+		-Xlinker -e -Xlinker _NSExtensionMain client/Finder/FinderSync.swift -o $(APPEX)/Contents/MacOS/ccsendFinder
+	codesign --force --sign - --identifier $(BUNDLE_ID).finder --entitlements client/Finder/entitlements.plist $(APPEX)
 	codesign --force --sign - --identifier $(BUNDLE_ID) $(APP)
 
 test: $(APP)
@@ -38,6 +46,8 @@ install: $(APP)
 	mkdir -p $(HOME)/.local/bin
 	ln -sf $(DEST)/Contents/MacOS/ccsend $(HOME)/.local/bin/ccsend
 	$(HOME)/.local/bin/ccsend install
+	-pluginkit -a $(DEST)/Contents/PlugIns/ccsendFinder.appex
+	-pluginkit -e use -i $(BUNDLE_ID).finder
 
 clean:
 	rm -rf client/.build client/build $(GEN)

@@ -26,16 +26,10 @@ enum Installer {
         switch config.menu {
         case .perHost:
             for h in config.hosts { wanted.append(("Send to \(h.label)", "ui --host \(h.name) --", true)) }
-            for h in importers {
-                wanted.append(("Import from \(h.label)", "ui-import --host \(h.name) --", true))
-                wanted.append(("Import from \(h.label) here", "ui-import --host \(h.name) --finder", false))
-            }
+            for h in importers { wanted.append(("Import from \(h.label)", "ui-import --host \(h.name) --", true)) }
         case .single:
             wanted.append(("Send to remote", "ui --", true))
-            if !importers.isEmpty {
-                wanted.append(("Import from remote", "ui-import --", true))
-                wanted.append(("Import from remote here", "ui-import --finder", false))
-            }
+            if !importers.isEmpty { wanted.append(("Import from remote", "ui-import --", true)) }
         }
         let fm = FileManager.default
         try fm.createDirectory(at: services, withIntermediateDirectories: true)
@@ -59,6 +53,7 @@ enum Installer {
         }
         for r in removed where !wanted.contains(where: { $0.title == r }) { print("removed Quick Action \"\(r)\"") }
 
+        try writeFinderMenu(config, importers: importers)
         resaveWithAutomator(wanted.map { services.appendingPathComponent("\($0.title.replacingOccurrences(of: "/", with: "-")).workflow").path })
         enable(wanted.map(\.title), disable: removed.filter { r in !wanted.contains(where: { $0.title == r }) })
         _ = try? Proc.run("/System/Library/CoreServices/pbs", ["-flush"], stdin: nil, timeout: 20)
@@ -78,6 +73,24 @@ enum Installer {
         _ = try? Proc.run("/System/Library/CoreServices/pbs", ["-update"], stdin: nil, timeout: 20)
         for r in removed { print("removed Quick Action \"\(r)\"") }
         if removed.isEmpty { print("no ccsend Quick Actions found") }
+    }
+
+    /// The Finder extension's menu (right-click on the Desktop or inside a folder):
+    /// titles and host names only. The sandboxed extension can read nothing else.
+    static func writeFinderMenu(_ config: Config, importers: [HostConfig]) throws {
+        var items: [[String: String]] = []
+        if config.menu == .single {
+            if !importers.isEmpty { items.append(["title": "Import from remote", "host": ""]) }
+        } else {
+            for h in importers { items.append(["title": "Import from \(h.label)", "host": h.name]) }
+        }
+        let url = FinderMenu.url
+        // Keep the token across installs; make one the first time.
+        let token = FinderMenu.token() ?? (0..<32).map { _ in String(format: "%02x", UInt8.random(in: 0...255)) }.joined()
+        let data = try JSONSerialization.data(withJSONObject: ["items": items, "token": token], options: [.prettyPrinted, .sortedKeys])
+        try data.write(to: url, options: .atomic)
+        chmod(url.path, 0o600)
+        print(items.isEmpty ? "Finder menu: no import-enabled hosts" : "Finder menu: " + items.map { $0["title"]! }.joined(separator: ", "))
     }
 
     static func isOurs(_ wf: URL) -> Bool {
@@ -171,5 +184,17 @@ enum Installer {
         for t in disable { status.removeValue(forKey: "(null) - \(t) - runWorkflowAsService") }
         CFPreferencesSetAppValue(key, status as CFDictionary, domain)
         CFPreferencesAppSynchronize(domain)
+    }
+}
+
+/// ~/.config/ccsend/finder-menu.json: the Finder extension's menu and the token
+/// that ccsend://import URLs must carry.
+enum FinderMenu {
+    static let url = Config.url.deletingLastPathComponent().appendingPathComponent("finder-menu.json")
+
+    static func token() -> String? {
+        guard let d = try? Data(contentsOf: url), let o = try? JSONSerialization.jsonObject(with: d) as? [String: Any],
+              let t = o["token"] as? String, t.count == 64 else { return nil }
+        return t
     }
 }

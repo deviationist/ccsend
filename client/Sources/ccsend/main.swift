@@ -227,9 +227,11 @@ func cmdInit(_ args: [String]) throws {
     print("wrote \(url.path)")
 }
 
-let argv = Array(CommandLine.arguments.dropFirst())
+let argv = Array(CommandLine.arguments.dropFirst()).filter { !$0.hasPrefix("-psn_") }
 do {
     switch argv.first {
+    case nil where Bundle.main.bundlePath.hasSuffix(".app"):
+        UI.runURL()   // started by LaunchServices for a ccsend:// link (the Finder extension)
     case "ui": try UI.run(Array(argv.dropFirst()))
     case "ui-import": try UI.runImport(Array(argv.dropFirst()))
     case "send": try cmdSend(Array(argv.dropFirst()))

@@ -17,7 +17,8 @@ relevant.
 | `client/Sources/ccsend/Transfer.swift` | Selection walk + filters (`Plan`), pax tar writer, shell escaping |
 | `client/Sources/ccsend/Inject.swift` | Typing the path into a Claude prompt: tmux and iTerm adapters |
 | `client/Sources/ccsend/Import.swift` | Unpacking an import stream from a host: the untrusted-archive rules live here |
-| `client/Sources/ccsend/Install.swift` | Generates `~/Library/Services/*.workflow` from the config |
+| `client/Sources/ccsend/Install.swift` | Generates `~/Library/Services/*.workflow` and `finder-menu.json` from the config |
+| `client/Finder/` | Sandboxed Finder Sync extension (Desktop/folder-background menu), built with swiftc by make |
 | `client/Sources/ccsend/UI/` | Window: `Model.swift` (state, SSH work off the main thread), `SendView.swift` |
 | `client/Sources/ccsend/SelfTest.swift` | `ccsend selftest`: pure-logic checks |
 | `server/remote.py` | Host side. Embedded into the app at build time, sent with every SSH call, never installed |
@@ -95,6 +96,9 @@ by make and is gitignored. Never edit it.
   with `addCleanup` in `setUp`, so a test's own cleanups (like killing its tmux
   server) run first.
 - **Linux limits file names to 255 bytes**, so non-ASCII names hit that sooner.
+- **Sandboxed extensions can't pass launch arguments** (they are dropped
+  silently). The Finder extension hands over to the app with a token-checked
+  `ccsend://` URL instead.
 - **macOS:** delete a signed binary before copying a new one (overwriting in
   place gets it killed). Finder lists Quick Actions only after Automator has
   saved them, which `ccsend install` does. Privacy permissions are tied to the

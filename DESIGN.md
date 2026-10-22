@@ -161,6 +161,14 @@ All arguments arrive as one base64 JSON object. Output is JSON lines.
   never through a link. It caps bytes and files while streaming, checks free
   space first, sets `com.apple.quarantine` on every file, and removes
   everything it created on any failure.
+- Finder extension (`client/Finder/`, embedded in the app): adds
+  "Import from <host>" to the Desktop and folder-background menus. It is
+  sandboxed and reads only `~/.config/ccsend/finder-menu.json` (titles, host
+  names, a random token, written by `ccsend install`, mode 0600). A sandboxed
+  extension cannot pass launch arguments, so it opens
+  `ccsend://import?host&dir&token`. The app ignores the link unless the token
+  matches, so a web page or another app can't drive it. Even then it only opens
+  the window.
 - `upload {dir, allowed_roots}` with a tar stream on stdin → writes entries,
   prints `{dir}` then `{top}` per top-level item written.
 

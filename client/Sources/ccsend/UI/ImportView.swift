@@ -163,7 +163,7 @@ struct ImportView: View {
         .contentShape(Rectangle())
         .onTapGesture(count: 2) { model.open(e) }
         .onTapGesture { model.toggle(e) }
-        .help(can ? "" : (e.kind == .link ? "Links are skipped (turn on Keep links)" : "Special files are never imported"))
+        .help(can ? "" : (e.kind == .link ? "Symbolic links are skipped (turn on Keep symbolic links)" : "Special files are never imported"))
     }
 
     private var options: some View {
@@ -171,8 +171,8 @@ struct ImportView: View {
             Toggle(isOn: $model.includeHidden) { Text(verbatim: "Include hidden files") }
             Toggle(isOn: $model.applyExcludes) { Text(verbatim: "Exclude common files") }
                 .help(model.config.excludes.joined(separator: ", "))
-            Toggle(isOn: $model.keepLinks) { Text(verbatim: "Keep links") }
-                .help("Links inside folders are skipped unless this is on")
+            Toggle(isOn: $model.keepLinks) { Text(verbatim: "Keep symbolic links") }
+                .help("Copy symlinks as links instead of skipping them. Off is safer: a link points at a path, and on your Mac that path may be something else.")
         }
         .disabled(model.phase == .importing || model.phase == .done)
     }

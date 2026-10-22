@@ -191,6 +191,7 @@ struct HostConfig {
     var importEnabled = false           // opt-in: "Import from <host>"
     var importRoots = ["~"]
     var importSymlinks = false
+    var importStart = "home"            // home | newest-claude | default | last | ~/path | /path
 }
 
 struct Config {
@@ -314,6 +315,12 @@ struct Config {
                 if let b = try bool("import") { h.importEnabled = b }
                 if let a = try strs("import_roots") { h.importRoots = a }
                 if let b = try bool("import_symlinks") { h.importSymlinks = b }
+                if let s = try str("import_start") {
+                    guard ["home", "newest-claude", "default", "last"].contains(s) || s == "~" || s.hasPrefix("~/") || s.hasPrefix("/") else {
+                        throw ConfigError("[\(n)]: import_start must be home, newest-claude, default, last, or a path starting with ~/ or /")
+                    }
+                    h.importStart = s
+                }
                 if let (v, l) = take("inject_via") {
                     guard case .strings(let a) = v, !a.isEmpty else { throw ConfigError("line \(l): inject_via must be a list like [\"tmux\", \"iterm\"]") }
                     h.injectVia = try a.map { s in
@@ -406,6 +413,7 @@ struct Config {
             import = false               # opt-in: "Import from <host>" pulls files from the host into a Mac folder
             import_roots = ["~"]         # what the Mac may browse and fetch on this host (checked on the host)
             import_symlinks = false      # links in imported folders: skipped (false) or kept as links (true)
+            import_start = "home"        # where the import window opens: home | newest-claude | default | last | ~/path
 
             """
         }

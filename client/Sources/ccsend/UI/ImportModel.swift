@@ -83,12 +83,22 @@ final class ImportModel: ObservableObject {
                     if !host.defaultLocation.isEmpty { sc.append(("Default  " + host.defaultLocation, host.defaultLocation)) }
                     self.shortcuts = sc
                     self.phase = .ready
-                    // Start in the newest Claude session's folder, else home.
-                    self.go(d?.sessions.first(where: { $0.kind == .claude })?.cwd ?? "~")
+                    self.go(self.startFolder(newestClaude: d?.sessions.first(where: { $0.kind == .claude })?.cwd))
                 }
             } catch {
                 DispatchQueue.main.async { self.phase = .failed("\(error)") }
             }
+        }
+    }
+
+    /// import_start: home (default) | newest-claude | default | last | a path.
+    private func startFolder(newestClaude: String?) -> String {
+        switch host.importStart {
+        case "home": return "~"
+        case "newest-claude": return newestClaude ?? "~"
+        case "default": return host.defaultLocation.isEmpty ? "~" : host.defaultLocation
+        case "last": return LastImport.get(host.name) ?? newestClaude ?? "~"
+        default: return host.importStart
         }
     }
 
@@ -218,6 +228,7 @@ final class ImportModel: ObservableObject {
                 let paths = imp.localPaths
                 DispatchQueue.main.async {
                     self.imported = paths
+                    LastImport.set(self.host.name, d)
                     self.progress = 1
                     self.phase = .done
                     NSWorkspace.shared.activateFileViewerSelecting(paths.map { URL(fileURLWithPath: $0) })
@@ -230,5 +241,24 @@ final class ImportModel: ObservableObject {
                 }
             }
         }
+    }
+}
+
+/// The folder last imported from, per host (for import_start = "last"). Mac only.
+enum LastImport {
+    static let url = FileManager.default.homeDirectoryForCurrentUser
+        .appendingPathComponent("Library/Application Support/ccsend/last-import.json")
+
+    static func get(_ host: String) -> String? {
+        guard let d = try? Data(contentsOf: url), let o = try? JSONSerialization.jsonObject(with: d) as? [String: String],
+              let p = o[host], Check.path(p) else { return nil }
+        return p
+    }
+
+    static func set(_ host: String, _ dir: String) {
+        var o = ((try? Data(contentsOf: url)).flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: String] }) ?? [:]
+        o[host] = dir
+        try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        if let d = try? JSONSerialization.data(withJSONObject: o, options: [.sortedKeys]) { try? d.write(to: url, options: .atomic) }
     }
 }

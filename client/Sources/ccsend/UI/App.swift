@@ -66,6 +66,36 @@ enum UI {
         return fm.homeDirectoryForCurrentUser.appendingPathComponent("Desktop").path
     }
 
+    /// Launched by the Finder extension with a ccsend://import URL (no arguments).
+    /// The URL must carry the token from finder-menu.json; anything else is ignored.
+    static func runURL() {
+        let app = NSApplication.shared
+        app.setActivationPolicy(.accessory)
+        let delegate = AppDelegate()
+        delegate.title = "ccsend import"
+        delegate.urlHandler = { url in
+            guard let c = URLComponents(url: url, resolvingAgainstBaseURL: false), c.scheme == "ccsend", c.host == "import" else {
+                throw RemoteError("unsupported link")
+            }
+            func q(_ n: String) -> String? { c.queryItems?.first(where: { $0.name == n })?.value }
+            let want = Data((FinderMenu.token() ?? "").utf8), got = Data((q("token") ?? "").utf8)
+            guard want.count == 64, got.count == want.count, zip(want, got).reduce(0, { $0 | ($1.0 ^ $1.1) }) == 0 else {
+                Log.event([("event", "url"), ("result", "refused"), ("error", "bad-token")])
+                throw RemoteError("ignored a ccsend link that did not come from the Finder extension")
+            }
+            let config = try Config.load()
+            let hostName = q("host") ?? ""
+            let host = hostName.isEmpty ? (config.hosts.first(where: \.importEnabled) ?? config.hosts[0]) : try config.host(hostName)
+            guard host.importEnabled else { throw RemoteError("import is off for \(host.name); set import = true in its config") }
+            guard let dir = q("dir"), dir.hasPrefix("/") else { throw RemoteError("no folder in the link") }
+            let dest = try destination(items: [], to: dir, finder: false)
+            let model = ImportModel(config: config, host: host, dest: dest)
+            return (AnyView(ImportView(model: model)), model.close)
+        }
+        app.delegate = delegate
+        withExtendedLifetime(delegate) { app.run() }
+    }
+
     private static func start(title: String, _ make: @escaping () throws -> (AnyView, () -> Void)) {
         let app = NSApplication.shared
         app.setActivationPolicy(.accessory)
@@ -90,12 +120,38 @@ enum UI {
 }
 
 final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
-    var root: AnyView!
+    var root: AnyView?
     var onClose: () -> Void = {}
     var title = "ccsend"
     var window: NSWindow!
+    /// Set when launched for a URL: builds the window from it.
+    var urlHandler: ((URL) throws -> (AnyView, () -> Void))?
+
+    func application(_ app: NSApplication, open urls: [URL]) {
+        guard window == nil, let handler = urlHandler, let url = urls.first else { return }
+        do {
+            let (view, close) = try handler(url)
+            root = view
+            onClose = close
+            show()
+        } catch {
+            NSApp.activate(ignoringOtherApps: true)
+            let alert = NSAlert()
+            alert.messageText = "ccsend"
+            alert.informativeText = Display.sentence("\(error)")
+            alert.runModal()
+            NSApp.terminate(nil)
+        }
+    }
 
     func applicationDidFinishLaunching(_ n: Notification) {
+        if root != nil { show(); return }
+        // Waiting for a URL; quit if none arrives.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 10) { if self.window == nil { NSApp.terminate(nil) } }
+    }
+
+    private func show() {
+        guard let root else { return }
         let view = NSHostingView(rootView: root)
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 600, height: 380),
                           styleMask: [.titled, .closable], backing: .buffered, defer: false)

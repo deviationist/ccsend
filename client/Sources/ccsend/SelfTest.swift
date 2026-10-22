@@ -49,6 +49,8 @@ enum SelfTest {
         expect((try? Config.parse(host))?.hosts[0].importEnabled == false, "import is off unless enabled")
         rejects(host + "import_roots = []\n", "empty import roots")
         rejects(host + "import_roots = [\"relative\"]\n", "relative import root")
+        rejects(host + "import_start = \"somewhere\"\n", "bad import_start")
+        expect((try? Config.parse(host))?.hosts[0].importStart == "home", "import starts at home")
         expect((try? Config.parse(host))?.hosts[0].injectVia == [.tmux], "tmux is the default adapter")
         expect((try? Config.parse(host))?.hosts[0].inject == .off, "inject is off unless enabled")
         expect((try? Config.parse(host + "inject = \"type\"\n"))?.hosts[0].inject == .type, "inject type")
