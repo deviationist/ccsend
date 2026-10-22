@@ -56,6 +56,10 @@ include_hidden = false       # default of the "Include hidden files" checkbox
 apply_excludes = true        # default of the "Exclude common files" checkbox
 excludes = ["node_modules", ".venv", "dist", "build", ".DS_Store"]
 
+[limits]
+max_total_mb = 2048          # ask before sending more
+max_files = 20000
+
 [logging]
 log_names = true             # file names in the logs (never contents)
 
@@ -68,7 +72,8 @@ ssh_sessions = true
 default_location = "~/inbox"
 custom_path = true
 allowed_roots = ["~"]        # uploads must resolve inside these, checked on the host
-inject = "off"               # opt-in, see below
+inject = "off"               # opt-in, see below: "type" | "submit"
+inject_via = ["tmux"]        # adapters, tried in order: "tmux", "iterm"
 ```
 
 ### Typing the path into Claude (opt-in)
@@ -98,7 +103,8 @@ Target one session exactly from the CLI with `claude:DIR`:
 ## Command line
 
 ```sh
-ccsend send devbox claude ~/Desktop/shot.png    # newest Claude session; also: shell | default | /path | ~/path
+ccsend send devbox claude ~/Desktop/shot.png    # newest Claude session; also: claude:DIR | shell | shell:DIR | default | /path
+ccsend send --hidden --all devbox default ~/proj   # include hidden files, skip the exclude list (--yes: over limits, --no-inject)
 ccsend sessions devbox
 ccsend log                                       # Mac log
 ccsend log --host devbox                         # the host's journal (journalctl -t ccsend)
@@ -115,6 +121,21 @@ In short:
 - **Logged on both ends,** with shared request ids. The Mac log is the authoritative record.
 
 The threat model and the full set of guarantees are in [DESIGN.md](DESIGN.md).
+
+## Permissions
+
+macOS asks once for each of these:
+- Access to Desktop, Downloads or Documents, the first time you send from there.
+- "ccsend wants to control iTerm2", only if a host uses `inject_via = ["iterm"]`.
+
+## Uninstall
+
+```sh
+ccsend uninstall               # removes only the Quick Actions ccsend created
+rm -rf ~/Applications/ccsend.app ~/.local/bin/ccsend ~/Library/Caches/ccsend ~/Library/Logs/ccsend.log*
+rm -rf ~/.config/ccsend        # your config
+```
+Nothing was installed on the hosts. Their journal entries (tag `ccsend`) age out with the journal.
 
 ## License
 

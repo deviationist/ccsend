@@ -14,6 +14,7 @@ usage:
   ccsend check                                 validate the config and test every host
   ccsend log [--host HOST] [-n N]              last N events from the Mac log, or from HOST's journal
   ccsend install                               create the Finder Quick Actions from the config
+  ccsend uninstall                             remove the Quick Actions ccsend created
   ccsend init --host NAME [--host NAME ...]    write a starter config
 
 config: ~/.config/ccsend/config.toml
@@ -183,6 +184,7 @@ do {
     case "check": try cmdCheck()
     case "log": try cmdLog(Array(argv.dropFirst()))
     case "install": try Installer.install()
+    case "uninstall": try Installer.uninstall()
     case "init": try cmdInit(Array(argv.dropFirst()))
     case "selftest": SelfTest.run()
     default: fail(usage)

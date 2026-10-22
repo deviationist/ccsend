@@ -5,3 +5,4 @@ client/build/
 client/Sources/ccsend/RemoteScript.swift
 __pycache__/
 .DS_Store
+.swiftpm/

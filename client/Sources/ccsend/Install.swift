@@ -56,6 +56,20 @@ enum Installer {
         print("Finder → right-click → Quick Actions. A keyboard shortcut can be set in System Settings → Keyboard → Keyboard Shortcuts → Services → Files and Folders.")
     }
 
+    /// `ccsend uninstall`: remove only the Quick Actions ccsend created.
+    static func uninstall() throws {
+        let fm = FileManager.default
+        var removed: [String] = []
+        for name in (try? fm.contentsOfDirectory(atPath: services.path)) ?? [] where name.hasSuffix(".workflow") {
+            let wf = services.appendingPathComponent(name)
+            if isOurs(wf) { try fm.removeItem(at: wf); removed.append(String(name.dropLast(".workflow".count))) }
+        }
+        enable([], disable: removed)
+        _ = try? Proc.run("/System/Library/CoreServices/pbs", ["-update"], stdin: nil, timeout: 20)
+        for r in removed { print("removed Quick Action \"\(r)\"") }
+        if removed.isEmpty { print("no ccsend Quick Actions found") }
+    }
+
     static func isOurs(_ wf: URL) -> Bool {
         guard let d = try? Data(contentsOf: wf.appendingPathComponent("Contents/document.wflow")),
               let s = String(data: d, encoding: .utf8) else { return false }
