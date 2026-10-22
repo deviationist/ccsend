@@ -24,6 +24,20 @@ enum Sender {
         return result
     }
 
+    /// Move the sent originals to the Trash (recoverable with Put Back). Only call
+    /// after the host confirmed every item and only if plan.sendsEverything.
+    static func trash(_ paths: [String]) -> [String] {
+        var failed: [String] = []
+        for p in paths {
+            do { try FileManager.default.trashItem(at: URL(fileURLWithPath: p), resultingItemURL: nil) }
+            catch { failed.append((p as NSString).lastPathComponent) }
+        }
+        Log.event([("event", "trash"), ("result", failed.isEmpty ? "ok" : "error"), ("items", String(paths.count))]
+                  + (Log.logNames ? [("names", Log.names(paths.map { ($0 as NSString).lastPathComponent }))] : [])
+                  + (failed.isEmpty ? [] : [("failed", Log.names(failed))]))
+        return failed
+    }
+
     static func copyToClipboard(_ s: String) {
         let pb = NSPasteboard.general
         pb.clearContents()

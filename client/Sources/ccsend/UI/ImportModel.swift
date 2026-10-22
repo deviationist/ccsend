@@ -231,7 +231,11 @@ final class ImportModel: ObservableObject {
                     LastImport.set(self.host.name, d)
                     self.progress = 1
                     self.phase = .done
-                    NSWorkspace.shared.activateFileViewerSelecting(paths.map { URL(fileURLWithPath: $0) })
+                    // The Desktop already shows them; elsewhere, open Finder on the imported items.
+                    let desktop = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Desktop").path
+                    if URL(fileURLWithPath: dest).resolvingSymlinksInPath().path != URL(fileURLWithPath: desktop).resolvingSymlinksInPath().path {
+                        NSWorkspace.shared.activateFileViewerSelecting(paths.map { URL(fileURLWithPath: $0) })
+                    }
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) { NSApp.terminate(nil) }
                 }
             } catch {

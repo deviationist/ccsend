@@ -11,6 +11,7 @@ usage:
         --all         do not apply the exclude list
         --yes         send even when over the configured limits
         --no-inject   do not type the path into the Claude prompt (when the host has inject on)
+        --trash       move the originals to the Trash after a complete send
   ccsend import HOST [options] REMOTE_PATH...  fetch files or folders (same parent folder) into --to DIR
         --to DIR      Mac folder to import into (default: the current folder)
         --hidden / --all / --links / --yes   hidden files, no excludes, keep links, over limits
@@ -48,7 +49,7 @@ func describe(_ p: Plan) -> String {
 
 func cmdSend(_ args: [String]) throws {
     var rest = args, opts: Set<String> = []
-    while let a = rest.first, ["--hidden", "--all", "--yes", "--no-inject"].contains(a) { opts.insert(a); rest.removeFirst() }
+    while let a = rest.first, ["--hidden", "--all", "--yes", "--no-inject", "--trash"].contains(a) { opts.insert(a); rest.removeFirst() }
     guard rest.count >= 3 else { fail(usage) }
     let config = try Config.load()
     let host = try config.host(rest[0])
@@ -66,6 +67,9 @@ func cmdSend(_ args: [String]) throws {
         fail("over the configured limits (max_total_mb=\(config.maxTotalMB), max_files=\(config.maxFiles)); add --yes")
     }
 
+    if opts.contains("--trash") && !plan.sendsEverything {
+        fail("--trash refused: some files in the folders would be skipped (use --hidden --all, or send without --trash)")
+    }
     let ssh = SSH(host: host, controlPath: nil)
     var dir = dest, create = false, target: Remote.Session?
     switch dest {
@@ -99,6 +103,10 @@ func cmdSend(_ args: [String]) throws {
     Sender.copyToClipboard(r.clipboard)
     print("sent to \(host.label):\(r.dir)")
     print(r.clipboard)
+    if opts.contains("--trash") {
+        let failed = Sender.trash(files.map { URL(fileURLWithPath: $0).standardizedFileURL.path })
+        print(failed.isEmpty ? "originals moved to the Trash" : "could not move to the Trash: \(failed.joined(separator: ", "))")
+    }
     if let s = target, s.kind == .claude, host.inject != .off, !opts.contains("--no-inject") {
         if Injector.adapter(for: s, host: host) == nil {
             print("not typed into Claude: no adapter in inject_via fits that session (path is on the clipboard)")

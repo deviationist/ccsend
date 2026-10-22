@@ -15,7 +15,11 @@ nothing listens on the Mac, and the host holds no credential.
    every 15 s), plus the default location and a path field.
 3. Pick one and press Send. The files are streamed over SSH. Names that already
    exist get `-1`, `-2`, and so on, so nothing is ever overwritten.
-4. The absolute remote path, for example `/home/alice/myapp/Screenshot\ 2026-01-01\ at\ 12.00.00.png`,
+4. Optional, per send: **Move the originals to the Trash after sending**. It is
+   unticked every time, runs only after the host confirms everything arrived,
+   and is unavailable when folder filters skip files (they would be lost). The
+   Trash's Put Back restores them.
+5. The absolute remote path, for example `/home/alice/myapp/Screenshot\ 2026-01-01\ at\ 12.00.00.png`,
    is on the clipboard.
 
 **Import (opt-in, `import = true` per host)** works the other way round:
@@ -116,6 +120,7 @@ Target one session exactly from the CLI with `claude:DIR`:
 ```sh
 ccsend send devbox claude ~/Desktop/shot.png    # newest Claude session; also: claude:DIR | shell | shell:DIR | default | /path
 ccsend send --hidden --all devbox default ~/proj   # include hidden files, skip the exclude list (--yes: over limits, --no-inject)
+ccsend send --trash devbox claude ~/Downloads/IMG_0042.PNG   # then move the original to the Trash
 ccsend import devbox --to ~/Downloads ~/myapp/report ~/myapp/notes.md   # same parent folder; --hidden --all --links --yes
 ccsend sessions devbox
 ccsend log                                       # Mac log

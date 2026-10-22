@@ -25,6 +25,10 @@ struct Plan {
     var skippedExcluded = 0
     var skippedSpecial = 0
     var sensitive: [String] = []       // archive paths that look like secrets
+
+    /// True when every file in the selection is in the stream, so trashing the
+    /// originals after sending loses nothing that wasn't sent.
+    var sendsEverything: Bool { skippedHidden == 0 && skippedExcluded == 0 && skippedSpecial == 0 }
     var hasFolders = false
 
     /// Files (incl. links) and bytes that will be sent under one top-level item.

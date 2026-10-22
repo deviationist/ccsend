@@ -71,6 +71,7 @@ final class SendModel: ObservableObject {
     @Published var progress: Double = 0
     @Published var result: SendResult?
     @Published var injectOn = true          // the per-send checkbox; only shown when the host opted in
+    @Published var trashAfter = false       // "Move to Trash after sending": unticked every time, never remembered
     @Published var doneMessage = ""
 
     private var ssh: SSH?
@@ -296,6 +297,7 @@ final class SendModel: ObservableObject {
         sendError = nil
         let total = max(Double(plan.bytes), 1)
         let injectInto = injectTarget, submit = host.inject == .submit
+        let trashThese = trashAfter && plan.sendsEverything ? files : []
         var lastTick = Date.distantPast
         work.async {
             do {
@@ -313,6 +315,11 @@ final class SendModel: ObservableObject {
                     } catch {
                         message = "Sent. Path copied, but typing into Claude failed: " + Display.sentence("\(error)")
                     }
+                }
+                if !trashThese.isEmpty {
+                    let failed = Sender.trash(trashThese)
+                    message += failed.isEmpty ? " Originals moved to the Trash."
+                                              : " Could not move to the Trash: " + failed.joined(separator: ", ") + "."
                 }
                 DispatchQueue.main.async {
                     Sender.copyToClipboard(r.clipboard)

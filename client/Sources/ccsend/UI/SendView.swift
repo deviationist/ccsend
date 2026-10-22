@@ -14,6 +14,7 @@ struct SendView: View {
             destinationSection
             injectOption
             if model.plan?.hasFolders == true { folderSection }
+            trashOption
             warnings
             Spacer(minLength: 0)
             footer
@@ -215,6 +216,24 @@ struct SendView: View {
                     .font(.callout).foregroundStyle(.secondary)
             }
         }
+    }
+
+    /// Opt-in per send; disabled when filters left files out, since trashing would lose them.
+    @ViewBuilder private var trashOption: some View {
+        let everything = model.plan?.sendsEverything ?? true
+        VStack(alignment: .leading, spacing: 2) {
+            Toggle(isOn: $model.trashAfter) {
+                Text(verbatim: model.files.count == 1 ? "Move the original to the Trash after sending"
+                                                      : "Move the originals to the Trash after sending")
+            }
+            .disabled(!everything || model.phase == .sending || model.phase == .done)
+            .help("Only after the host confirms everything arrived. Put Back in the Trash restores it.")
+            if !everything {
+                Text(verbatim: "Not available: some files in the folders are skipped and would be lost.")
+                    .font(.caption).foregroundStyle(.secondary).padding(.leading, 20)
+            }
+        }
+        .onChange(of: everything) { _, ok in if !ok { model.trashAfter = false } }
     }
 
     private var folderSection: some View {

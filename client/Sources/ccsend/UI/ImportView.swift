@@ -217,7 +217,7 @@ struct ImportView: View {
                 Text(verbatim: "Importing…").foregroundStyle(.secondary)
             case .done:
                 Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
-                Text(verbatim: "Imported. Showing in Finder.").lineLimit(1)
+                Text(verbatim: model.dest.hasSuffix("/Desktop") ? "Imported to the Desktop." : "Imported. Showing in Finder.").lineLimit(1)
             default:
                 EmptyView()
             }
