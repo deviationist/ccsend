@@ -1,5 +1,19 @@
 import Foundation
 
+/// The Mac home every ccsend path hangs off: config, log, SSH control sockets,
+/// Quick Actions, last-import. CCSEND_HOME (an absolute, existing folder)
+/// replaces it, so tools/generate-readme-assets.zsh can run the real binary in a
+/// sandbox. Not a trust boundary: whoever sets the environment runs ccsend anyway.
+enum Paths {
+    static let home: URL = {
+        if let h = ProcessInfo.processInfo.environment["CCSEND_HOME"], h.hasPrefix("/") {
+            var d: ObjCBool = false
+            if FileManager.default.fileExists(atPath: h, isDirectory: &d), d.boolValue { return URL(fileURLWithPath: h, isDirectory: true) }
+        }
+        return FileManager.default.homeDirectoryForCurrentUser
+    }()
+}
+
 // ~/.config/ccsend/config.toml
 //
 // Parsed by a small strict reader for the TOML subset this schema uses:
@@ -218,7 +232,7 @@ struct Config {
         return h
     }
 
-    static let url = FileManager.default.homeDirectoryForCurrentUser
+    static let url = Paths.home
         .appendingPathComponent(".config/ccsend/config.toml")
 
     /// ssh options a host may set. Everything that runs commands, forwards or

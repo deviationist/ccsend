@@ -1,0 +1,327 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="668" height="258" viewBox="0 0 668 258" role="img" aria-label="ccsend at the terminal: sending Floke-6.zip to devbox, the picker listing the Claude session in ~/code/floke first because it matches the file name, then the file arriving there and its path typed into that Claude prompt">
+  <style>
+    .fr{opacity:0}
+    #fr1{animation:k1 12490ms step-end infinite}
+    @keyframes k1{0%{opacity:1}0.360%{opacity:0}}
+    #fr2{animation:k2 12490ms step-end infinite}
+    @keyframes k2{0%{opacity:0}0.360%{opacity:1}0.721%{opacity:0}}
+    #fr3{animation:k3 12490ms step-end infinite}
+    @keyframes k3{0%{opacity:0}0.721%{opacity:1}1.081%{opacity:0}}
+    #fr4{animation:k4 12490ms step-end infinite}
+    @keyframes k4{0%{opacity:0}1.081%{opacity:1}1.441%{opacity:0}}
+    #fr5{animation:k5 12490ms step-end infinite}
+    @keyframes k5{0%{opacity:0}1.441%{opacity:1}1.801%{opacity:0}}
+    #fr6{animation:k6 12490ms step-end infinite}
+    @keyframes k6{0%{opacity:0}1.801%{opacity:1}2.162%{opacity:0}}
+    #fr7{animation:k7 12490ms step-end infinite}
+    @keyframes k7{0%{opacity:0}2.162%{opacity:1}2.522%{opacity:0}}
+    #fr8{animation:k8 12490ms step-end infinite}
+    @keyframes k8{0%{opacity:0}2.522%{opacity:1}2.882%{opacity:0}}
+    #fr9{animation:k9 12490ms step-end infinite}
+    @keyframes k9{0%{opacity:0}2.882%{opacity:1}3.243%{opacity:0}}
+    #fr10{animation:k10 12490ms step-end infinite}
+    @keyframes k10{0%{opacity:0}3.243%{opacity:1}3.603%{opacity:0}}
+    #fr11{animation:k11 12490ms step-end infinite}
+    @keyframes k11{0%{opacity:0}3.603%{opacity:1}3.963%{opacity:0}}
+    #fr12{animation:k12 12490ms step-end infinite}
+    @keyframes k12{0%{opacity:0}3.963%{opacity:1}4.323%{opacity:0}}
+    #fr13{animation:k13 12490ms step-end infinite}
+    @keyframes k13{0%{opacity:0}4.323%{opacity:1}4.684%{opacity:0}}
+    #fr14{animation:k14 12490ms step-end infinite}
+    @keyframes k14{0%{opacity:0}4.684%{opacity:1}5.044%{opacity:0}}
+    #fr15{animation:k15 12490ms step-end infinite}
+    @keyframes k15{0%{opacity:0}5.044%{opacity:1}5.404%{opacity:0}}
+    #fr16{animation:k16 12490ms step-end infinite}
+    @keyframes k16{0%{opacity:0}5.404%{opacity:1}5.765%{opacity:0}}
+    #fr17{animation:k17 12490ms step-end infinite}
+    @keyframes k17{0%{opacity:0}5.765%{opacity:1}6.125%{opacity:0}}
+    #fr18{animation:k18 12490ms step-end infinite}
+    @keyframes k18{0%{opacity:0}6.125%{opacity:1}6.485%{opacity:0}}
+    #fr19{animation:k19 12490ms step-end infinite}
+    @keyframes k19{0%{opacity:0}6.485%{opacity:1}6.845%{opacity:0}}
+    #fr20{animation:k20 12490ms step-end infinite}
+    @keyframes k20{0%{opacity:0}6.845%{opacity:1}7.206%{opacity:0}}
+    #fr21{animation:k21 12490ms step-end infinite}
+    @keyframes k21{0%{opacity:0}7.206%{opacity:1}7.566%{opacity:0}}
+    #fr22{animation:k22 12490ms step-end infinite}
+    @keyframes k22{0%{opacity:0}7.566%{opacity:1}7.926%{opacity:0}}
+    #fr23{animation:k23 12490ms step-end infinite}
+    @keyframes k23{0%{opacity:0}7.926%{opacity:1}8.287%{opacity:0}}
+    #fr24{animation:k24 12490ms step-end infinite}
+    @keyframes k24{0%{opacity:0}8.287%{opacity:1}8.647%{opacity:0}}
+    #fr25{animation:k25 12490ms step-end infinite}
+    @keyframes k25{0%{opacity:0}8.647%{opacity:1}9.007%{opacity:0}}
+    #fr26{animation:k26 12490ms step-end infinite}
+    @keyframes k26{0%{opacity:0}9.007%{opacity:1}9.367%{opacity:0}}
+    #fr27{animation:k27 12490ms step-end infinite}
+    @keyframes k27{0%{opacity:0}9.367%{opacity:1}9.728%{opacity:0}}
+    #fr28{animation:k28 12490ms step-end infinite}
+    @keyframes k28{0%{opacity:0}9.728%{opacity:1}10.088%{opacity:0}}
+    #fr29{animation:k29 12490ms step-end infinite}
+    @keyframes k29{0%{opacity:0}10.088%{opacity:1}10.448%{opacity:0}}
+    #fr30{animation:k30 12490ms step-end infinite}
+    @keyframes k30{0%{opacity:0}10.448%{opacity:1}10.809%{opacity:0}}
+    #fr31{animation:k31 12490ms step-end infinite}
+    @keyframes k31{0%{opacity:0}10.809%{opacity:1}11.169%{opacity:0}}
+    #fr32{animation:k32 12490ms step-end infinite}
+    @keyframes k32{0%{opacity:0}11.169%{opacity:1}11.529%{opacity:0}}
+    #fr33{animation:k33 12490ms step-end infinite}
+    @keyframes k33{0%{opacity:0}11.529%{opacity:1}11.890%{opacity:0}}
+    #fr34{animation:k34 12490ms step-end infinite}
+    @keyframes k34{0%{opacity:0}11.890%{opacity:1}12.250%{opacity:0}}
+    #fr35{animation:k35 12490ms step-end infinite}
+    @keyframes k35{0%{opacity:0}12.250%{opacity:1}12.610%{opacity:0}}
+    #fr36{animation:k36 12490ms step-end infinite}
+    @keyframes k36{0%{opacity:0}12.610%{opacity:1}12.970%{opacity:0}}
+    #fr37{animation:k37 12490ms step-end infinite}
+    @keyframes k37{0%{opacity:0}12.970%{opacity:1}13.331%{opacity:0}}
+    #fr38{animation:k38 12490ms step-end infinite}
+    @keyframes k38{0%{opacity:0}13.331%{opacity:1}13.691%{opacity:0}}
+    #fr39{animation:k39 12490ms step-end infinite}
+    @keyframes k39{0%{opacity:0}13.691%{opacity:1}14.051%{opacity:0}}
+    #fr40{animation:k40 12490ms step-end infinite}
+    @keyframes k40{0%{opacity:0}14.051%{opacity:1}14.412%{opacity:0}}
+    #fr41{animation:k41 12490ms step-end infinite}
+    @keyframes k41{0%{opacity:0}14.412%{opacity:1}14.772%{opacity:0}}
+    #fr42{animation:k42 12490ms step-end infinite}
+    @keyframes k42{0%{opacity:0}14.772%{opacity:1}15.132%{opacity:0}}
+    #fr43{animation:k43 12490ms step-end infinite}
+    @keyframes k43{0%{opacity:0}15.132%{opacity:1}19.135%{opacity:0}}
+    #fr44{animation:k44 12490ms step-end infinite}
+    @keyframes k44{0%{opacity:0}19.135%{opacity:1}23.139%{opacity:0}}
+    #fr45{animation:k45 12490ms step-end infinite}
+    @keyframes k45{0%{opacity:0}23.139%{opacity:1}43.955%{opacity:0}}
+    #fr46{animation:k46 12490ms step-end infinite}
+    @keyframes k46{0%{opacity:0}43.955%{opacity:1}58.367%{opacity:0}}
+    #fr47{animation:k47 12490ms step-end infinite}
+    @keyframes k47{0%{opacity:0}58.367%{opacity:1}}
+    @media (prefers-reduced-motion:reduce){.fr{animation:none!important;opacity:0}#fr47{opacity:1}}
+  </style>
+  <rect width="668" height="258" rx="10" fill="#1e1e2e"/>
+  <rect width="668" height="30" rx="10" fill="#181825"/>
+  <rect y="24" width="668" height="6" fill="#181825"/>
+  <circle cx="18" cy="15" r="5.5" fill="#f38ba8"/><circle cx="36" cy="15" r="5.5" fill="#f9e2af"/><circle cx="54" cy="15" r="5.5" fill="#a6e3a1"/>
+  <text x="334" y="20" text-anchor="middle" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="12" fill="#9399b2">alice@mac — zsh</text>
+  <g id="fr1" class="fr" opacity="0">
+  <rect x="35.70" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85">$ </tspan></text>
+  </g>
+  <g id="fr2" class="fr" opacity="0">
+  <rect x="43.55" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70">$ c</tspan></text>
+  </g>
+  <g id="fr3" class="fr" opacity="0">
+  <rect x="51.40" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55">$ cc</tspan></text>
+  </g>
+  <g id="fr4" class="fr" opacity="0">
+  <rect x="59.25" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40">$ ccs</tspan></text>
+  </g>
+  <g id="fr5" class="fr" opacity="0">
+  <rect x="67.10" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25">$ ccse</tspan></text>
+  </g>
+  <g id="fr6" class="fr" opacity="0">
+  <rect x="74.95" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10">$ ccsen</tspan></text>
+  </g>
+  <g id="fr7" class="fr" opacity="0">
+  <rect x="82.80" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95">$ ccsend</tspan></text>
+  </g>
+  <g id="fr8" class="fr" opacity="0">
+  <rect x="90.65" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80">$ ccsend </tspan></text>
+  </g>
+  <g id="fr9" class="fr" opacity="0">
+  <rect x="98.50" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65">$ ccsend s</tspan></text>
+  </g>
+  <g id="fr10" class="fr" opacity="0">
+  <rect x="106.35" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50">$ ccsend se</tspan></text>
+  </g>
+  <g id="fr11" class="fr" opacity="0">
+  <rect x="114.20" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35">$ ccsend sen</tspan></text>
+  </g>
+  <g id="fr12" class="fr" opacity="0">
+  <rect x="122.05" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20">$ ccsend send</tspan></text>
+  </g>
+  <g id="fr13" class="fr" opacity="0">
+  <rect x="129.90" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05">$ ccsend send </tspan></text>
+  </g>
+  <g id="fr14" class="fr" opacity="0">
+  <rect x="137.75" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90">$ ccsend send d</tspan></text>
+  </g>
+  <g id="fr15" class="fr" opacity="0">
+  <rect x="145.60" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75">$ ccsend send de</tspan></text>
+  </g>
+  <g id="fr16" class="fr" opacity="0">
+  <rect x="153.45" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60">$ ccsend send dev</tspan></text>
+  </g>
+  <g id="fr17" class="fr" opacity="0">
+  <rect x="161.30" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45">$ ccsend send devb</tspan></text>
+  </g>
+  <g id="fr18" class="fr" opacity="0">
+  <rect x="169.15" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30">$ ccsend send devbo</tspan></text>
+  </g>
+  <g id="fr19" class="fr" opacity="0">
+  <rect x="177.00" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15">$ ccsend send devbox</tspan></text>
+  </g>
+  <g id="fr20" class="fr" opacity="0">
+  <rect x="184.85" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00">$ ccsend send devbox </tspan></text>
+  </g>
+  <g id="fr21" class="fr" opacity="0">
+  <rect x="192.70" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85">$ ccsend send devbox ~</tspan></text>
+  </g>
+  <g id="fr22" class="fr" opacity="0">
+  <rect x="200.55" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70">$ ccsend send devbox ~/</tspan></text>
+  </g>
+  <g id="fr23" class="fr" opacity="0">
+  <rect x="208.40" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55">$ ccsend send devbox ~/D</tspan></text>
+  </g>
+  <g id="fr24" class="fr" opacity="0">
+  <rect x="216.25" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40">$ ccsend send devbox ~/Do</tspan></text>
+  </g>
+  <g id="fr25" class="fr" opacity="0">
+  <rect x="224.10" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25">$ ccsend send devbox ~/Dow</tspan></text>
+  </g>
+  <g id="fr26" class="fr" opacity="0">
+  <rect x="231.95" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10">$ ccsend send devbox ~/Down</tspan></text>
+  </g>
+  <g id="fr27" class="fr" opacity="0">
+  <rect x="239.80" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95">$ ccsend send devbox ~/Downl</tspan></text>
+  </g>
+  <g id="fr28" class="fr" opacity="0">
+  <rect x="247.65" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95 239.80">$ ccsend send devbox ~/Downlo</tspan></text>
+  </g>
+  <g id="fr29" class="fr" opacity="0">
+  <rect x="255.50" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95 239.80 247.65">$ ccsend send devbox ~/Downloa</tspan></text>
+  </g>
+  <g id="fr30" class="fr" opacity="0">
+  <rect x="263.35" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95 239.80 247.65 255.50">$ ccsend send devbox ~/Download</tspan></text>
+  </g>
+  <g id="fr31" class="fr" opacity="0">
+  <rect x="271.20" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95 239.80 247.65 255.50 263.35">$ ccsend send devbox ~/Downloads</tspan></text>
+  </g>
+  <g id="fr32" class="fr" opacity="0">
+  <rect x="279.05" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95 239.80 247.65 255.50 263.35 271.20">$ ccsend send devbox ~/Downloads/</tspan></text>
+  </g>
+  <g id="fr33" class="fr" opacity="0">
+  <rect x="286.90" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95 239.80 247.65 255.50 263.35 271.20 279.05">$ ccsend send devbox ~/Downloads/F</tspan></text>
+  </g>
+  <g id="fr34" class="fr" opacity="0">
+  <rect x="294.75" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95 239.80 247.65 255.50 263.35 271.20 279.05 286.90">$ ccsend send devbox ~/Downloads/Fl</tspan></text>
+  </g>
+  <g id="fr35" class="fr" opacity="0">
+  <rect x="302.60" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95 239.80 247.65 255.50 263.35 271.20 279.05 286.90 294.75">$ ccsend send devbox ~/Downloads/Flo</tspan></text>
+  </g>
+  <g id="fr36" class="fr" opacity="0">
+  <rect x="310.45" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95 239.80 247.65 255.50 263.35 271.20 279.05 286.90 294.75 302.60">$ ccsend send devbox ~/Downloads/Flok</tspan></text>
+  </g>
+  <g id="fr37" class="fr" opacity="0">
+  <rect x="318.30" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95 239.80 247.65 255.50 263.35 271.20 279.05 286.90 294.75 302.60 310.45">$ ccsend send devbox ~/Downloads/Floke</tspan></text>
+  </g>
+  <g id="fr38" class="fr" opacity="0">
+  <rect x="326.15" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95 239.80 247.65 255.50 263.35 271.20 279.05 286.90 294.75 302.60 310.45 318.30">$ ccsend send devbox ~/Downloads/Floke-</tspan></text>
+  </g>
+  <g id="fr39" class="fr" opacity="0">
+  <rect x="334.00" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95 239.80 247.65 255.50 263.35 271.20 279.05 286.90 294.75 302.60 310.45 318.30 326.15">$ ccsend send devbox ~/Downloads/Floke-6</tspan></text>
+  </g>
+  <g id="fr40" class="fr" opacity="0">
+  <rect x="341.85" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95 239.80 247.65 255.50 263.35 271.20 279.05 286.90 294.75 302.60 310.45 318.30 326.15 334.00">$ ccsend send devbox ~/Downloads/Floke-6.</tspan></text>
+  </g>
+  <g id="fr41" class="fr" opacity="0">
+  <rect x="349.70" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95 239.80 247.65 255.50 263.35 271.20 279.05 286.90 294.75 302.60 310.45 318.30 326.15 334.00 341.85">$ ccsend send devbox ~/Downloads/Floke-6.z</tspan></text>
+  </g>
+  <g id="fr42" class="fr" opacity="0">
+  <rect x="357.55" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95 239.80 247.65 255.50 263.35 271.20 279.05 286.90 294.75 302.60 310.45 318.30 326.15 334.00 341.85 349.70">$ ccsend send devbox ~/Downloads/Floke-6.zi</tspan></text>
+  </g>
+  <g id="fr43" class="fr" opacity="0">
+  <rect x="365.40" y="45" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95 239.80 247.65 255.50 263.35 271.20 279.05 286.90 294.75 302.60 310.45 318.30 326.15 334.00 341.85 349.70 357.55">$ ccsend send devbox ~/Downloads/Floke-6.zip</tspan></text>
+  </g>
+  <g id="fr44" class="fr" opacity="0">
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95 239.80 247.65 255.50 263.35 271.20 279.05 286.90 294.75 302.60 310.45 318.30 326.15 334.00 341.85 349.70 357.55">$ ccsend send devbox ~/Downloads/Floke-6.zip</tspan></text>
+  <text y="77" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25">1 item(s), 1 file(s), 3 MB</tspan></text>
+  <text y="97" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#9399b2"><tspan x="20.00">…</tspan></text>
+  <rect x="610" y="40" width="38" height="26" rx="6" fill="#313244" stroke="#45475a"/>
+  <text x="629" y="58" text-anchor="middle" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="14" fill="#cdd6f4">⏎</text>
+  </g>
+  <g id="fr45" class="fr" opacity="0">
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95 239.80 247.65 255.50 263.35 271.20 279.05 286.90 294.75 302.60 310.45 318.30 326.15 334.00 341.85 349.70 357.55">$ ccsend send devbox ~/Downloads/Floke-6.zip</tspan></text>
+  <text y="77" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25">1 item(s), 1 file(s), 3 MB</tspan></text>
+  <rect x="145.60" y="85" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="97" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#89dceb"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75">send to devbox&gt; </tspan></text>
+  <rect x="67" y="112" width="581" height="1" fill="#45475a"/>
+  <text y="117" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#f9e2af"><tspan x="35.70 43.55 51.40">5/5</tspan></text>
+  <text y="137" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#9399b2"><tspan x="35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20">Floke-6.zip</tspan></text>
+  <rect x="0" y="141" width="668" height="20" fill="#313244"/>
+  <rect x="20.00" y="141" width="3" height="20" fill="#f38ba8"/>
+  <text y="157" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95 239.80 247.65 255.50 263.35 271.20 279.05 286.90 294.75 302.60 310.45 318.30 326.15 334.00 341.85 349.70 357.55 365.40 373.25 381.10 388.95 396.80 404.65 412.50 420.35 428.20 436.05 443.90 451.75 459.60 467.45 475.30 483.15 491.00 498.85 506.70 514.55 522.40 530.25 538.10 545.95 553.80 561.65 569.50 577.35 585.20 593.05 600.90 608.75 616.60">claude  ~/code/floke        tmux floke · 19:48 · guessed from the file name</tspan></text>
+  <rect x="20.00" y="161" width="3" height="20" fill="#313244"/>
+  <text y="177" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95 239.80 247.65 255.50 263.35 271.20 279.05 286.90 294.75 302.60 310.45 318.30 326.15 334.00 341.85 349.70 357.55 365.40 373.25 381.10 388.95 396.80">shell   ~/code/blog         SSH session · 19:48</tspan></text>
+  <rect x="20.00" y="181" width="3" height="20" fill="#313244"/>
+  <text y="197" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95 239.80 247.65 255.50 263.35 271.20 279.05 286.90 294.75 302.60 310.45 318.30 326.15 334.00 341.85 349.70 357.55 365.40 373.25">claude  ~/code/api-gateway  tmux api · 19:48</tspan></text>
+  <rect x="20.00" y="201" width="3" height="20" fill="#313244"/>
+  <text y="217" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95 239.80 247.65 255.50 263.35 271.20 279.05 286.90 294.75 302.60 310.45 318.30 326.15 334.00 341.85 349.70 357.55 365.40 373.25 381.10 388.95">default ~/inbox             created if missing</tspan></text>
+  <rect x="20.00" y="221" width="3" height="20" fill="#313244"/>
+  <text y="237" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95">path    type a path…      </tspan></text>
+  </g>
+  <g id="fr46" class="fr" opacity="0">
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95 239.80 247.65 255.50 263.35 271.20 279.05 286.90 294.75 302.60 310.45 318.30 326.15 334.00 341.85 349.70 357.55">$ ccsend send devbox ~/Downloads/Floke-6.zip</tspan></text>
+  <text y="77" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25">1 item(s), 1 file(s), 3 MB</tspan></text>
+  <text y="97" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#a6e3a1"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95 239.80 247.65 255.50 263.35 271.20 279.05 286.90 294.75 302.60">sent to devbox:/home/alice/code/floke</tspan></text>
+  <text y="117" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#89b4fa"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95 239.80 247.65 255.50 263.35 271.20 279.05">/home/alice/code/floke/Floke-6.zip</tspan></text>
+  <text y="137" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#a6e3a1"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95 239.80 247.65 255.50 263.35 271.20 279.05 286.90 294.75 302.60">typed into the Claude prompt via tmux</tspan></text>
+  <rect x="35.70" y="145" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="157" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85">$ </tspan></text>
+  <rect x="610" y="40" width="38" height="26" rx="6" fill="#313244" stroke="#45475a"/>
+  <text x="629" y="58" text-anchor="middle" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="14" fill="#cdd6f4">⏎</text>
+  </g>
+  <g id="fr47" class="fr">
+  <text y="57" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95 239.80 247.65 255.50 263.35 271.20 279.05 286.90 294.75 302.60 310.45 318.30 326.15 334.00 341.85 349.70 357.55">$ ccsend send devbox ~/Downloads/Floke-6.zip</tspan></text>
+  <text y="77" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25">1 item(s), 1 file(s), 3 MB</tspan></text>
+  <text y="97" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#a6e3a1"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95 239.80 247.65 255.50 263.35 271.20 279.05 286.90 294.75 302.60">sent to devbox:/home/alice/code/floke</tspan></text>
+  <text y="117" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#89b4fa"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95 239.80 247.65 255.50 263.35 271.20 279.05">/home/alice/code/floke/Floke-6.zip</tspan></text>
+  <text y="137" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#a6e3a1"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95 239.80 247.65 255.50 263.35 271.20 279.05 286.90 294.75 302.60">typed into the Claude prompt via tmux</tspan></text>
+  <rect x="35.70" y="145" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="157" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85">$ </tspan></text>
+  <text y="197" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#9399b2"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95 239.80 247.65 255.50 263.35 271.20 279.05 286.90 294.75 302.60 310.45 318.30 326.15 334.00 341.85 349.70 357.55 365.40 373.25 381.10 388.95 396.80 404.65 412.50 420.35 428.20 436.05 443.90 451.75 459.60 467.45 475.30 483.15 491.00 498.85">── meanwhile on devbox, tmux session floke: Claude's prompt ──</tspan></text>
+  <rect x="310.45" y="205" width="8" height="16" fill="#cdd6f4" opacity="0.75"/>
+  <text y="217" font-family="'Cascadia Code','Fira Code',SFMono-Regular,Consolas,Menlo,monospace" font-size="13" xml:space="preserve" fill="#cdd6f4"><tspan x="20.00 27.85 35.70 43.55 51.40 59.25 67.10 74.95 82.80 90.65 98.50 106.35 114.20 122.05 129.90 137.75 145.60 153.45 161.30 169.15 177.00 184.85 192.70 200.55 208.40 216.25 224.10 231.95 239.80 247.65 255.50 263.35 271.20 279.05 286.90 294.75 302.60">&gt; /home/alice/code/floke/Floke-6.zip </tspan></text>
+  </g>
+</svg>

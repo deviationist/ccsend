@@ -25,6 +25,8 @@ relevant.
 | `client/Sources/ccsend/SelfTest.swift` | `ccsend selftest`: pure-logic checks |
 | `server/remote.py` | Host side. Embedded into the app at build time, sent with every SSH call, never installed |
 | `server/test_remote.py` | stdlib `unittest`, runs remote.py exactly as the client does |
+| `tools/generate-readme-assets.zsh` | README images: real ccsend against a throwaway Docker `devbox`, windows as PNG, terminal as SVG |
+| `assets/` | Generated README images (hashed names). Regenerate, never hand-edit |
 
 No third-party dependencies on either side, and it should stay that way.
 Client: Swift 6 toolchain, macOS 15+. Server: Python 3.8+, Linux (`/proc`).
@@ -106,4 +108,14 @@ by make and is gitignored. Never edit it.
   saved them, which `ccsend install` does. Privacy permissions are tied to the
   bundle id (`make BUNDLE_ID=…`).
 - **The app's own snapshot aid:** `CCSEND_SNAPSHOT=/path CCSEND_SNAPSHOT_AT=2,5`
-  renders the window to PNGs without Screen Recording permission.
+  renders the window to PNGs without Screen Recording permission. The window is
+  invisible and never takes focus, and the app quits after the last snapshot.
+  `CCSEND_SNAPSHOT_FRAME=1` adds the title bar, corners and shadow (README
+  images). Controls draw in their inactive colours, because the app is never
+  active; faking key/active state does not change that.
+- **`CCSEND_HOME`** replaces the Mac home for every ccsend path (config, log,
+  control sockets, Quick Actions). `HOME` does not: Foundation reads the
+  passwd entry. Keep it short, since SSH control socket paths are capped at 104 bytes.
+- **The send window resizes with its content** (`NSHostingController` with
+  `.preferredContentSize`). A fixed `fittingSize` taken at launch cut off the
+  buttons once the sessions loaded.

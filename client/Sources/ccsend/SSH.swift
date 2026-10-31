@@ -25,7 +25,7 @@ struct SSH {
     ]
 
     static let controlDir: URL = {
-        let d = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Caches/ccsend")
+        let d = Paths.home.appendingPathComponent("Library/Caches/ccsend")
         try? FileManager.default.createDirectory(at: d, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
         chmod(d.path, 0o700)
         return d

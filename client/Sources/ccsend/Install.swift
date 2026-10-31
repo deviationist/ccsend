@@ -6,7 +6,7 @@ import Foundation
 /// Each one only runs: open -n -a <ccsend.app> --args ui [--host H] -- <files>.
 /// Quick Actions created earlier by ccsend that no longer match the config are removed.
 enum Installer {
-    static let services = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Services")
+    static let services = Paths.home.appendingPathComponent("Library/Services")
 
     static func appPath() throws -> String {
         let exe = URL(fileURLWithPath: Bundle.main.executablePath ?? CommandLine.arguments[0]).resolvingSymlinksInPath().path

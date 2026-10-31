@@ -63,7 +63,7 @@ enum UI {
             var err: NSDictionary?
             if let p = script?.executeAndReturnError(&err).stringValue, !p.isEmpty, let f = folder(p) { return f }
         }
-        return fm.homeDirectoryForCurrentUser.appendingPathComponent("Desktop").path
+        return Paths.home.appendingPathComponent("Desktop").path
     }
 
     /// Launched by the Finder extension with a ccsend://import URL (no arguments).
@@ -152,19 +152,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     private func show() {
         guard let root else { return }
-        let view = NSHostingView(rootView: root)
+        // The window follows the view's size: it grows when sessions, notes or
+        // completions appear (a fixed size cut off the buttons once they loaded).
+        let snapshotPath = ProcessInfo.processInfo.environment["CCSEND_SNAPSHOT"]
+        let controller = NSHostingController(rootView: root)
+        controller.sizingOptions = [.preferredContentSize]
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 600, height: 380),
                           styleMask: [.titled, .closable], backing: .buffered, defer: false)
         window.title = title
-        window.contentView = view
+        window.contentViewController = controller
         window.delegate = self
         window.level = .floating
         window.isReleasedWhenClosed = false
-        window.setContentSize(view.fittingSize)
+        window.setContentSize(controller.view.fittingSize)
         window.center()
+        if let out = snapshotPath {
+            // Quiet: invisible and never takes focus (cacheDisplay draws it anyway).
+            window.level = .normal
+            window.alphaValue = 0
+            window.ignoresMouseEvents = true
+            window.orderBack(nil)
+            snapshot(to: out)
+            return
+        }
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
-        if let out = ProcessInfo.processInfo.environment["CCSEND_SNAPSHOT"] { snapshot(to: out) }
     }
 
     /// Testing aid: render the window to PNGs (no Screen Recording permission needed).
@@ -174,16 +186,74 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         window.effectiveAppearance.performAsCurrentDrawingAppearance {
             window.contentView?.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
         }
-        let times = (ProcessInfo.processInfo.environment["CCSEND_SNAPSHOT_AT"] ?? "2,5")
-            .split(separator: ",").compactMap { Double($0) }
+        let env = ProcessInfo.processInfo.environment
+        let times = (env["CCSEND_SNAPSHOT_AT"] ?? "2,5").split(separator: ",").compactMap { Double($0) }
+        let framed = env["CCSEND_SNAPSHOT_FRAME"] == "1"
         for (i, delay) in times.enumerated() {
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
                 guard let v = self.window.contentView,
                       let rep = v.bitmapImageRepForCachingDisplay(in: v.bounds) else { return }
                 v.cacheDisplay(in: v.bounds, to: rep)
-                try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: "\(path)-\(i).png"))
+                let out = framed ? (self.framedSnapshot(content: rep) ?? rep) : rep
+                try? out.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: "\(path)-\(i).png"))
+                // The window is invisible: never leave it running after the last one.
+                if i == times.count - 1 { NSApp.terminate(nil) }
             }
         }
+    }
+
+    /// CCSEND_SNAPSHOT_FRAME=1 (README images): the content under the window's own
+    /// title bar, with rounded corners and a drop shadow, on a transparent margin.
+    /// cacheDisplay on the frame view draws the title bar but misplaces the
+    /// content, so the two are cached separately and stacked here.
+    private func framedSnapshot(content: NSBitmapImageRep) -> NSBitmapImageRep? {
+        guard let frameView = window.contentView?.superview,
+              let barRep = frameView.bitmapImageRepForCachingDisplay(in: frameView.bounds) else { return nil }
+        frameView.cacheDisplay(in: frameView.bounds, to: barRep)
+        let size = frameView.bounds.size, contentH = window.contentView!.bounds.height
+        let margin: CGFloat = 40, radius: CGFloat = 10
+        let scale = CGFloat(content.pixelsWide) / window.contentView!.bounds.width
+        let canvas = NSSize(width: size.width + 2 * margin, height: size.height + 2 * margin)
+        guard let out = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(canvas.width * scale), pixelsHigh: Int(canvas.height * scale),
+                                         bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+                                         colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0) else { return nil }
+        out.size = canvas
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: out)
+        let win = NSRect(x: margin, y: margin, width: size.width, height: size.height)
+        let shape = NSBezierPath(roundedRect: win, xRadius: radius, yRadius: radius)
+        let shadow = NSShadow()
+        shadow.shadowColor = NSColor.black.withAlphaComponent(0.45)
+        shadow.shadowBlurRadius = 22
+        shadow.shadowOffset = NSSize(width: 0, height: -8)
+        NSGraphicsContext.saveGraphicsState()
+        shadow.set()
+        window.effectiveAppearance.performAsCurrentDrawingAppearance { NSColor.windowBackgroundColor.setFill() }
+        shape.fill()
+        NSGraphicsContext.restoreGraphicsState()
+        NSGraphicsContext.saveGraphicsState()
+        shape.addClip()
+        // Only the title bar strip (the top of the frame view's image) is used.
+        let barH = size.height - contentH
+        if let full = barRep.cgImage,
+           let strip = full.cropping(to: CGRect(x: 0, y: 0, width: CGFloat(full.width), height: barH * CGFloat(full.height) / size.height)) {
+            NSImage(cgImage: strip, size: NSSize(width: size.width, height: barH))
+                .draw(in: NSRect(x: margin, y: margin + contentH, width: size.width, height: barH))
+            // A window that isn't key draws grey traffic lights; paint the active ones.
+            for (i, hex) in [0xFF5F57, 0xFEBC2E, 0x28C840].enumerated() {
+                let c = NSColor(red: CGFloat(hex >> 16) / 255, green: CGFloat(hex >> 8 & 0xFF) / 255, blue: CGFloat(hex & 0xFF) / 255, alpha: 1)
+                c.setFill()
+                let cx = margin + 14 + CGFloat(i) * 20, cy = margin + contentH + barH / 2
+                NSBezierPath(ovalIn: NSRect(x: cx - 6.5, y: cy - 6.5, width: 13, height: 13)).fill()
+            }
+        }
+        content.draw(in: NSRect(x: margin, y: margin, width: size.width, height: contentH))
+        NSColor(white: 0.5, alpha: 0.35).setStroke()
+        shape.lineWidth = 1
+        shape.stroke()
+        NSGraphicsContext.restoreGraphicsState()
+        NSGraphicsContext.restoreGraphicsState()
+        return out
     }
 
     func windowWillClose(_ n: Notification) { NSApp.terminate(nil) }

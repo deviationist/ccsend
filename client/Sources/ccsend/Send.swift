@@ -48,7 +48,7 @@ enum Sender {
 /// ~/Library/Logs/ccsend.log: one event per line, key=value, rotated at 1 MB.
 /// Never file contents. File names only when log_names is on.
 enum Log {
-    static let url = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Logs/ccsend.log")
+    static let url = Paths.home.appendingPathComponent("Library/Logs/ccsend.log")
     /// This run (window or CLI invocation); sent to the host with every request.
     static let run = String(UUID().uuidString.lowercased().prefix(8))
     static var logNames = true

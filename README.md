@@ -8,6 +8,10 @@ remote path is copied to the clipboard, shell-escaped, ready to paste.
 Push only, over plain SSH. Nothing is installed or configured on the host,
 nothing listens on the Mac, and the host holds no credential.
 
+<p align="center">
+  <img src="assets/send-a45354.png" width="680" alt="The ccsend window sending Floke-6.zip to devbox: the host's Claude Code sessions and SSH shell listed with their folders, the Claude session in ~/code/floke preselected because it matches the file name, and checkboxes to type the path into that Claude prompt and to move the original to the Trash">
+</p>
+
 ## How it works
 
 1. Select files or folders in Finder → right-click → Quick Actions → **Send to &lt;host&gt;**.
@@ -34,6 +38,10 @@ These items come from ccsend's Finder extension and sit in the main
 right-click menu, not under Quick Actions. Browse the host,
 tick files and folders, and press Import. The Mac fetches them over SSH and
 shows them in Finder.
+
+<p align="center">
+  <img src="assets/import-a45354.png" width="680" alt="The ccsend import window: browsing ~/code/floke/out on devbox, with files and a folder to tick, their sizes and times, and options for hidden files, common files and symbolic links">
+</p>
 
 The host side is `server/remote.py`. The app embeds it and runs it with the
 host's own `python3` for the length of one SSH command.
@@ -128,6 +136,10 @@ Target one session exactly from the CLI with `claude:DIR`:
 
 ## Command line
 
+<p align="center">
+  <img src="assets/demo-a45354.svg" alt="ccsend at the terminal: sending Floke-6.zip to devbox, the picker listing the Claude session in ~/code/floke first because it matches the file name, then the file arriving there and its path typed into that Claude prompt">
+</p>
+
 ```sh
 ccsend send devbox claude ~/Desktop/shot.png    # newest Claude session; also: claude:DIR | shell | shell:DIR | default | /path
 ccsend send --hidden --all devbox default ~/proj   # include hidden files, skip the exclude list (--yes: over limits, --no-inject)
@@ -140,6 +152,13 @@ ccsend sessions devbox
 ccsend log                                       # Mac log
 ccsend log --host devbox                         # the host's journal (journalctl -t ccsend)
 ```
+
+Without a DEST, ccsend lists the host's destinations in fzf (or as a numbered
+list), with the guess first:
+
+<p align="center">
+  <img src="assets/picker-a45354.svg" alt="the ccsend destination picker: the guessed Claude session first, then an SSH shell, another Claude session, the default location and a typed path">
+</p>
 
 ## Security
 
@@ -175,6 +194,24 @@ rm -rf ~/Applications/ccsend.app ~/.local/bin/ccsend ~/Library/Caches/ccsend ~/L
 rm -rf ~/.config/ccsend        # your config
 ```
 Nothing was installed on the hosts. Their journal entries (tag `ccsend`) age out with the journal.
+
+## README images
+
+```sh
+make && zsh tools/generate-readme-assets.zsh    # → assets/*-<hash>.{png,svg} + README refs
+zsh tools/generate-readme-assets.zsh /tmp/out   # fixed names elsewhere, README untouched
+```
+
+They come from a real run, not mock-ups. The script starts a throwaway Docker
+container as `devbox` (user `alice`, sshd, two stand-in Claude sessions in tmux
+and an SSH shell) and points the real ccsend at it through a sandbox home
+(`CCSEND_HOME`). Your config, keys and clipboard take no part. The windows are
+rendered by the app itself (`CCSEND_SNAPSHOT_FRAME=1`), invisibly and without
+Screen Recording permission. The terminal images draw the genuine output of the
+CLI on a terminal grid; a stub fzf records the rows ccsend offers and picks the
+first. `demo.svg` animates with CSS keyframes, which GitHub renders, and
+`prefers-reduced-motion` freezes it on its last frame. Rerun it when the windows,
+the picker or the CLI output change, and commit the images with the README.
 
 ## License
 

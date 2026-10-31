@@ -54,7 +54,7 @@ final class ImportModel: ObservableObject {
     func tilde(_ p: String) -> String { Display.tilde(p, home: home) }
 
     var localDestLabel: String {
-        let h = FileManager.default.homeDirectoryForCurrentUser.path
+        let h = Paths.home.path
         return dest == h ? "~" : dest.hasPrefix(h + "/") ? "~" + dest.dropFirst(h.count) : dest
     }
 
@@ -232,7 +232,7 @@ final class ImportModel: ObservableObject {
                     self.progress = 1
                     self.phase = .done
                     // The Desktop already shows them; elsewhere, open Finder on the imported items.
-                    let desktop = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Desktop").path
+                    let desktop = Paths.home.appendingPathComponent("Desktop").path
                     if self.config.revealImports,
                        URL(fileURLWithPath: dest).resolvingSymlinksInPath().path != URL(fileURLWithPath: desktop).resolvingSymlinksInPath().path {
                         NSWorkspace.shared.activateFileViewerSelecting(paths.map { URL(fileURLWithPath: $0) })
@@ -251,7 +251,7 @@ final class ImportModel: ObservableObject {
 
 /// The folder last imported from, per host (for import_start = "last"). Mac only.
 enum LastImport {
-    static let url = FileManager.default.homeDirectoryForCurrentUser
+    static let url = Paths.home
         .appendingPathComponent("Library/Application Support/ccsend/last-import.json")
 
     static func get(_ host: String) -> String? {
