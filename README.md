@@ -15,6 +15,9 @@ nothing listens on the Mac, and the host holds no credential.
 ## How it works
 
 1. Select files or folders in Finder → right-click → Quick Actions → **Send to &lt;host&gt;**.
+
+   <img src="assets/finder-quick-actions.png" width="430" alt="Finder's right-click menu on Acme-6.zip with the Quick Actions submenu open, showing Send to devbox">
+
 2. A window lists the host's Claude Code sessions and SSH shells (refreshed
    every 15 s), plus the default location and a path field.
    With `guess_destination` on, a name like `Acme-6.zip` preselects a session
@@ -212,6 +215,10 @@ CLI on a terminal grid; a stub fzf records the rows ccsend offers and picks the
 first. `demo.svg` animates with CSS keyframes, which GitHub renders, and
 `prefers-reduced-motion` freezes it on its last frame. Rerun it when the windows,
 the picker or the CLI output change, and commit the images with the README.
+
+`assets/finder-quick-actions.png` is the exception: Finder's menu can't be
+rendered by the app, so it is a hand-taken screenshot (a `devbox`-only config,
+`ccsend install`, a timed ⌘⇧5 capture). The script leaves it alone.
 
 ## License
 
