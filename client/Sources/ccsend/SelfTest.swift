@@ -66,21 +66,21 @@ enum SelfTest {
         } else { expect(false, "ui behaviour keys refused") }
 
         // Guessing the destination from the file name.
-        expect(Guess.tokens("Floke-6.zip") == ["floke", "6"], "tokens: dash and digits")
-        expect(Guess.tokens("FlokeApp_v2.tar.gz") == ["floke", "app", "v", "2"], "tokens: camelCase and .tar.gz")
-        expect(Guess.words(["Floke-6.zip"]) == ["floke"], "words: digits dropped")
-        expect(Guess.words(["floke-app-v2.tar.gz"]) == ["floke", "flokeapp", "flokeappv"], "words: joined runs")
+        expect(Guess.tokens("Acme-6.zip") == ["acme", "6"], "tokens: dash and digits")
+        expect(Guess.tokens("AcmeApp_v2.tar.gz") == ["acme", "app", "v", "2"], "tokens: camelCase and .tar.gz")
+        expect(Guess.words(["Acme-6.zip"]) == ["acme"], "words: digits dropped")
+        expect(Guess.words(["acme-app-v2.tar.gz"]) == ["acme", "acmeapp", "acmeappv"], "words: joined runs")
         expect(Guess.words(["web3-site.zip"]).contains("web3site"), "words: digits inside a run are kept")
         expect(Guess.words(["Screenshot 2026-01-01 at 12.00.00.png", "IMG_0042.PNG", "final copy.pdf"]).isEmpty, "words: generic names give nothing")
-        expect(Guess.norm("Floke_App") == "flokeapp" && Guess.norm("Ølfloke") == "lfloke", "norm")
-        expect(Guess.match("/home/a/code/floke/src", home: "/home/a", words: ["floke"]) == "floke", "match a parent component")
-        expect(Guess.match("/home/a/code", home: "/home/a", words: ["floke"]) == nil, "no match")
+        expect(Guess.norm("Acme_App") == "acmeapp" && Guess.norm("Ølacme") == "lacme", "norm")
+        expect(Guess.match("/home/a/code/acme/src", home: "/home/a", words: ["acme"]) == "acme", "match a parent component")
+        expect(Guess.match("/home/a/code", home: "/home/a", words: ["acme"]) == nil, "no match")
         expect(Guess.match("/home/a", home: "/home/a", words: ["a"]) == nil, "home itself never matches")
         func sess(_ k: Remote.Session.Kind, _ cwd: String) -> Remote.Session {
             Remote.Session(kind: k, cwd: cwd, tmux: "", pane: "", pid: 2, sshPort: 0, started: Date())
         }
-        let ss = [sess(.shell, "/h/a/floke"), sess(.claude, "/h/a/other"), sess(.claude, "/h/a/floke/src"), sess(.claude, "/h/a/floke")]
-        expect(Guess.session(ss, home: "/h/a", words: ["floke"]) == ss[2], "session: Claude before shell, newest first")
+        let ss = [sess(.shell, "/h/a/acme"), sess(.claude, "/h/a/other"), sess(.claude, "/h/a/acme/src"), sess(.claude, "/h/a/acme")]
+        expect(Guess.session(ss, home: "/h/a", words: ["acme"]) == ss[2], "session: Claude before shell, newest first")
         expect(Guess.session(ss, home: "/h/a", words: ["nope"]) == nil, "session: none")
 
         // Terminal picker: host text can't fake the index field or reach the terminal raw.
@@ -89,11 +89,11 @@ enum SelfTest {
         expect(TermPicker.index(fromFzf: pl[1] + "\n", count: 2) == 1, "picker index")
         expect(TermPicker.index(fromFzf: "5\tx\n", count: 2) == nil && TermPicker.index(fromFzf: "", count: 2) == nil, "picker index range")
         let t0 = Date(timeIntervalSince1970: 0), t1 = Date(timeIntervalSince1970: 1)
-        expect(Guess.best([.init(path: "/h/x/floke", word: "floke", depth: 2, mtime: t1),
-                           .init(path: "/h/floke-app", word: "flokeapp", depth: 1, mtime: t0),
-                           .init(path: "/h/floke", word: "floke", depth: 1, mtime: t0)])?.path == "/h/floke-app", "best: longest word")
-        expect(Guess.best([.init(path: "/h/x/floke", word: "floke", depth: 2, mtime: t1),
-                           .init(path: "/h/floke", word: "floke", depth: 1, mtime: t0)])?.path == "/h/floke", "best: shallowest")
+        expect(Guess.best([.init(path: "/h/x/acme", word: "acme", depth: 2, mtime: t1),
+                           .init(path: "/h/acme-app", word: "acmeapp", depth: 1, mtime: t0),
+                           .init(path: "/h/acme", word: "acme", depth: 1, mtime: t0)])?.path == "/h/acme-app", "best: longest word")
+        expect(Guess.best([.init(path: "/h/x/acme", word: "acme", depth: 2, mtime: t1),
+                           .init(path: "/h/acme", word: "acme", depth: 1, mtime: t0)])?.path == "/h/acme", "best: shallowest")
         rejects(host + "label = \"a\nb\"\n", "unterminated string")
 
         // Hardened ssh options come before anything configurable (OpenSSH keeps the first value).

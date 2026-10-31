@@ -401,7 +401,7 @@ struct Config {
         preselect = "newest-claude"  # "newest-claude" | "default-location" | "none"
         refresh_seconds = 15         # re-read the host's sessions while the window is open; 0 = off
         trash_after_send = true      # default of "Move the originals to the Trash after sending" (never deletes)
-        guess_destination = true     # preselect a session or folder named like the file ("Floke-6.zip" -> ~/code/floke)
+        guess_destination = true     # preselect a session or folder named like the file ("Acme-6.zip" -> ~/code/acme)
         close_when_done = true       # close the window shortly after a send or import; false: stay open
         copy_path = true             # put the sent path on the clipboard
         reveal_imports = true        # show imported items in Finder (never for the Desktop)

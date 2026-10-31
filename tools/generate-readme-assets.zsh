@@ -89,14 +89,14 @@ done
 cat > "$tmp/seed.sh" <<'SEED'
 set -e
 cd ~
-mkdir -p .local/bin code/floke/src code/floke/out code/api-gateway code/blog/posts notes inbox
+mkdir -p .local/bin code/acme/src code/acme/out code/api-gateway code/blog/posts notes inbox
 cp /usr/bin/python3 .local/bin/claude
-touch code/floke/README.md code/floke/Cargo.toml code/floke/src/main.rs code/api-gateway/main.go \
+touch code/acme/README.md code/acme/Cargo.toml code/acme/src/main.rs code/api-gateway/main.go \
       code/blog/posts/hello.md notes/todo.md
-head -c 2000000 /dev/urandom > code/floke/out/report.pdf
-head -c 412000 /dev/urandom > code/floke/out/chart.png
-head -c 23000 /dev/urandom > code/floke/out/results.csv
-mkdir -p code/floke/out/frames && head -c 96000 /dev/urandom > code/floke/out/frames/0001.png
+head -c 2000000 /dev/urandom > code/acme/out/report.pdf
+head -c 412000 /dev/urandom > code/acme/out/chart.png
+head -c 23000 /dev/urandom > code/acme/out/results.csv
+mkdir -p code/acme/out/frames && head -c 96000 /dev/urandom > code/acme/out/frames/0001.png
 ssh-keygen -q -t ed25519 -N '' -f ~/.ssh/self && cat ~/.ssh/self.pub >> ~/.ssh/authorized_keys
 FAKE='import sys, time; sys.stdout.write("> "); sys.stdout.flush(); time.sleep(10**9)'
 tmux new -d -s api -c ~/code/api-gateway ~/.local/bin/claude -c "$FAKE"
@@ -104,7 +104,7 @@ sleep 1
 # An SSH login shell (what "shell" sessions are), parked in ~/code/blog.
 setsid -f sh -c 'sleep 1000000 | ssh -tt -o StrictHostKeyChecking=accept-new -i ~/.ssh/self localhost "cd ~/code/blog && exec bash -i" >/dev/null 2>&1'
 sleep 1
-tmux new -d -s floke -c ~/code/floke ~/.local/bin/claude -c "$FAKE"
+tmux new -d -s acme -c ~/code/acme ~/.local/bin/claude -c "$FAKE"
 sleep 1
 SEED
 docker cp "$tmp/seed.sh" "$ctr:/tmp/seed.sh" >/dev/null
@@ -124,11 +124,11 @@ ssh_options = ["Port=$port", "HostKeyAlias=devbox", "UserKnownHostsFile=$tmp/ssh
 default_location = "~/inbox"
 inject = "type"
 import = true
-import_start = "~/code/floke/out"
+import_start = "~/code/acme/out"
 TOML
 chmod 600 "$H/.config/ccsend/config.toml"
 # Round sizes, so the byte counts read the same in every locale.
-head -c 3000000 /dev/urandom > "$H/Downloads/Floke-6.zip"
+head -c 3000000 /dev/urandom > "$H/Downloads/Acme-6.zip"
 
 export CCSEND_HOME="$H"
 "$ccsend" check >/dev/null || { print -u2 "generate-readme-assets: ccsend check failed"; "$ccsend" check; exit 1 }
@@ -147,7 +147,7 @@ snap() {
   [[ -s "$out-0.png" ]] || { print -u2 "generate-readme-assets: no snapshot for $name"; exit 1 }
 }
 print -u2 "rendering the windows…"
-snap send ui --host devbox -- "$H/Downloads/Floke-6.zip"
+snap send ui --host devbox -- "$H/Downloads/Acme-6.zip"
 snap import ui-import --host devbox --to "$H/Downloads"
 
 # ---- terminal runs -----------------------------------------------------------------
@@ -181,9 +181,9 @@ chmod +x "$tmp/bin/fzf" "$tmp/bin/inpty"
 
 print -u2 "running the CLI…"
 send_out=$(FZF_ARGS="$tmp/fzf-args" FZF_CAPTURE="$tmp/fzf-rows" PATH="$tmp/bin:$PATH" \
-           "$tmp/bin/inpty" "$ccsend" send devbox "$H/Downloads/Floke-6.zip") || { print -u2 "$send_out"; exit 1 }
+           "$tmp/bin/inpty" "$ccsend" send devbox "$H/Downloads/Acme-6.zip") || { print -u2 "$send_out"; exit 1 }
 sleep 0.5
-pane=$(docker exec -u alice "$ctr" tmux capture-pane -p -t floke | sed '/^$/d' | head -1)
+pane=$(docker exec -u alice "$ctr" tmux capture-pane -p -t acme | sed '/^$/d' | head -1)
 
 typeset -a rows fargs
 rows=("${(@f)$(<"$tmp/fzf-rows")}"); rows=(${rows:#})
@@ -289,7 +289,7 @@ canvas_h() { print -rn -- $(( TH + PY + $1 * LH + PY )) }
 
 # ---- compose -----------------------------------------------------------------------
 # The command as typed: the sandbox home shown as the ~ it stands for.
-CMD_SEND='ccsend send devbox ~/Downloads/Floke-6.zip'
+CMD_SEND='ccsend send devbox ~/Downloads/Acme-6.zip'
 P='$ '
 
 # output lines → entries; the sent path and the success lines get colour.
@@ -330,7 +330,7 @@ typeset -a a1 a2 a3 a4
 a1=("t|$P$CMD_SEND" "$plan_line" "c|…")
 a2=("${picker[@]}")
 a3=("t|$P$CMD_SEND" "$plan_line" "${send_result[@]}" "x|$P")
-a4=("${a3[@]}" 'b|' "c|── meanwhile on devbox, tmux session floke: Claude's prompt ──" "x|$pane ")
+a4=("${a3[@]}" 'b|' "c|── meanwhile on devbox, tmux session acme: Claude's prompt ──" "x|$pane ")
 FR+=(a1 a2 a3 a4); FR_KEY+=('⏎' '' '⏎' ''); FR_DUR+=(500 2600 1800 5200)
 
 keycap() {
@@ -377,7 +377,7 @@ anim_svg() {  # <file> <aria>
   } > "$1"
 }
 
-DEMO_ARIA='ccsend at the terminal: sending Floke-6.zip to devbox, the picker listing the Claude session in ~/code/floke first because it matches the file name, then the file arriving there and its path typed into that Claude prompt'
+DEMO_ARIA='ccsend at the terminal: sending Acme-6.zip to devbox, the picker listing the Claude session in ~/code/acme first because it matches the file name, then the file arriving there and its path typed into that Claude prompt'
 PICKER_ARIA='the ccsend destination picker: the guessed Claude session first, then an SSH shell, another Claude session, the default location and a typed path'
 
 write_all() {   # <dir> <suffix>

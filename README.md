@@ -9,7 +9,7 @@ Push only, over plain SSH. Nothing is installed or configured on the host,
 nothing listens on the Mac, and the host holds no credential.
 
 <p align="center">
-  <img src="assets/send-a45354.png" width="680" alt="The ccsend window sending Floke-6.zip to devbox: the host's Claude Code sessions and SSH shell listed with their folders, the Claude session in ~/code/floke preselected because it matches the file name, and checkboxes to type the path into that Claude prompt and to move the original to the Trash">
+  <img src="assets/send-3444a6.png" width="680" alt="The ccsend window sending Acme-6.zip to devbox: the host's Claude Code sessions and SSH shell listed with their folders, the Claude session in ~/code/acme preselected because it matches the file name, and checkboxes to type the path into that Claude prompt and to move the original to the Trash">
 </p>
 
 ## How it works
@@ -17,8 +17,8 @@ nothing listens on the Mac, and the host holds no credential.
 1. Select files or folders in Finder → right-click → Quick Actions → **Send to &lt;host&gt;**.
 2. A window lists the host's Claude Code sessions and SSH shells (refreshed
    every 15 s), plus the default location and a path field.
-   With `guess_destination` on, a name like `Floke-6.zip` preselects a session
-   working in a folder named `floke` (any case, `-`/`_` ignored), or else a
+   With `guess_destination` on, a name like `Acme-6.zip` preselects a session
+   working in a folder named `acme` (any case, `-`/`_` ignored), or else a
    folder the host finds with that name under `allowed_roots` (up to 4 levels
    deep, hidden and excluded folders skipped), put in the path field. A note
    says it was guessed. Generic words (screenshot, img, final, copy, …) and
@@ -40,7 +40,7 @@ tick files and folders, and press Import. The Mac fetches them over SSH and
 shows them in Finder.
 
 <p align="center">
-  <img src="assets/import-a45354.png" width="680" alt="The ccsend import window: browsing ~/code/floke/out on devbox, with files and a folder to tick, their sizes and times, and options for hidden files, common files and symbolic links">
+  <img src="assets/import-3444a6.png" width="680" alt="The ccsend import window: browsing ~/code/acme/out on devbox, with files and a folder to tick, their sizes and times, and options for hidden files, common files and symbolic links">
 </p>
 
 The host side is `server/remote.py`. The app embeds it and runs it with the
@@ -137,16 +137,16 @@ Target one session exactly from the CLI with `claude:DIR`:
 ## Command line
 
 <p align="center">
-  <img src="assets/demo-a45354.svg" alt="ccsend at the terminal: sending Floke-6.zip to devbox, the picker listing the Claude session in ~/code/floke first because it matches the file name, then the file arriving there and its path typed into that Claude prompt">
+  <img src="assets/demo-3444a6.svg" alt="ccsend at the terminal: sending Acme-6.zip to devbox, the picker listing the Claude session in ~/code/acme first because it matches the file name, then the file arriving there and its path typed into that Claude prompt">
 </p>
 
 ```sh
 ccsend send devbox claude ~/Desktop/shot.png    # newest Claude session; also: claude:DIR | shell | shell:DIR | default | /path
 ccsend send --hidden --all devbox default ~/proj   # include hidden files, skip the exclude list (--yes: over limits, --no-inject)
 ccsend send --trash devbox claude ~/Downloads/IMG_0042.PNG   # then move the original to the Trash
-ccsend send devbox ~/Downloads/Floke-6.zip         # no DEST: choose at the terminal (fzf if installed), guess first
+ccsend send devbox ~/Downloads/Acme-6.zip         # no DEST: choose at the terminal (fzf if installed), guess first
 ccsend send devbox -- a.png b.png                  # same, for several files; or DEST "pick"
-ccsend send devbox guess ~/Downloads/Floke-6.zip   # send to the best guess without asking
+ccsend send devbox guess ~/Downloads/Acme-6.zip   # send to the best guess without asking
 ccsend import devbox --to ~/Downloads ~/myapp/report ~/myapp/notes.md   # same parent folder; --hidden --all --links --yes
 ccsend sessions devbox
 ccsend log                                       # Mac log
@@ -157,7 +157,7 @@ Without a DEST, ccsend lists the host's destinations in fzf (or as a numbered
 list), with the guess first:
 
 <p align="center">
-  <img src="assets/picker-a45354.svg" alt="the ccsend destination picker: the guessed Claude session first, then an SSH shell, another Claude session, the default location and a typed path">
+  <img src="assets/picker-3444a6.svg" alt="the ccsend destination picker: the guessed Claude session first, then an SSH shell, another Claude session, the default location and a typed path">
 </p>
 
 ## Security

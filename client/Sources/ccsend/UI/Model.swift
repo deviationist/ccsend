@@ -176,7 +176,7 @@ final class SendModel: ObservableObject {
     // MARK: guessing from the file name
 
     /// ui.guess_destination: prefer a session already in a folder named like the
-    /// file ("Floke-6.zip" -> a session in ~/code/floke), else ask the host for
+    /// file ("Acme-6.zip" -> a session in ~/code/acme), else ask the host for
     /// such a folder under allowed_roots and put it in the path field. Never
     /// overrides a destination the user picked.
     private func guessDestination() {

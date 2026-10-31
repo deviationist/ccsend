@@ -122,20 +122,20 @@ class Remote(unittest.TestCase):
     # ------------------------------------------------------------ guess
 
     def test_guess(self):
-        for d in ("code/floke/src", "code/other/Floke_App", "code/node_modules/floke", ".cache/floke",
-                  "a/b/c/d/floke", "dest/My-App"):
+        for d in ("code/acme/src", "code/other/Acme_App", "code/node_modules/acme", ".cache/acme",
+                  "a/b/c/d/acme", "dest/My-App"):
             os.makedirs(self.p(*d.split("/")))
         os.symlink(self.p("code"), self.p("dest", "link"))
-        out = self.run_remote({"cmd": "guess", "words": ["floke", "flokeapp", "myapp"], "roots": ["~"],
+        out = self.run_remote({"cmd": "guess", "words": ["acme", "acmeapp", "myapp"], "roots": ["~"],
                                "excludes": ["node_modules"]})
         got = sorted(m["path"][len(self.home) + 1:] for m in out["matches"])
         # Not: inside node_modules, hidden, deeper than 4 levels, or through the link.
-        self.assertEqual(got, ["code/floke", "code/other/Floke_App", "dest/My-App"])
+        self.assertEqual(got, ["code/acme", "code/other/Acme_App", "dest/My-App"])
         self.assertTrue(out["complete"])
-        self.assertEqual({m["word"] for m in out["matches"]}, {"floke", "flokeapp", "myapp"})
-        out = self.run_remote({"cmd": "guess", "words": ["floke"], "roots": ["~/dest"]})
+        self.assertEqual({m["word"] for m in out["matches"]}, {"acme", "acmeapp", "myapp"})
+        out = self.run_remote({"cmd": "guess", "words": ["acme"], "roots": ["~/dest"]})
         self.assertEqual(out["matches"], [])
-        for bad in ([], ["a b"], ["fl"], ["../x"], "floke", [1]):
+        for bad in ([], ["a b"], ["fl"], ["../x"], "acme", [1]):
             self.assertFalse(self.run_remote({"cmd": "guess", "words": bad, "roots": ["~"]})["ok"], bad)
 
     # ------------------------------------------------------------ upload

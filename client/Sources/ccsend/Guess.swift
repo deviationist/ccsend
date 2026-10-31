@@ -1,8 +1,8 @@
 import Foundation
 
 /// Guessing the destination from the names being sent (`ui.guess_destination`):
-/// "Floke-6.zip" suggests a folder named floke, Floke or floke_app's sibling
-/// "Floke-App" for "floke-app-v2.tar.gz". Pure logic; the host does the walk.
+/// "Acme-6.zip" suggests a folder named acme, Acme or acme_app's sibling
+/// "Acme-App" for "acme-app-v2.tar.gz". Pure logic; the host does the walk.
 enum Guess {
     /// Words too generic to say anything about where a file belongs: common
     /// file-name noise and common folder names.
@@ -23,7 +23,7 @@ enum Guess {
     }
 
     /// Tokens of one name: extension(s) removed, split at punctuation, letter/digit
-    /// changes and camelCase humps. "FlokeApp-v2.tar.gz" -> floke app v 2.
+    /// changes and camelCase humps. "AcmeApp-v2.tar.gz" -> acme app v 2.
     static func tokens(_ name: String) -> [String] {
         var stem = name
         let ext = (stem as NSString).pathExtension
@@ -46,7 +46,7 @@ enum Guess {
     }
 
     /// Words a folder name may match: runs of up to four adjacent tokens joined
-    /// ("floke", "flokeapp"), at least 3 characters, not generic.
+    /// ("acme", "acmeapp"), at least 3 characters, not generic.
     static func words(_ names: [String]) -> [String] {
         var seen = Set<String>(), out: [String] = []
         for name in names {
@@ -54,7 +54,7 @@ enum Guess {
             for i in t.indices {
                 for n in 1...4 where i + n <= t.count {
                     let run = t[i..<(i + n)], w = run.joined()
-                    // Not "floke6" from "Floke-6", not "finalcopy": a run must not start or end
+                    // Not "acme6" from "Acme-6", not "finalcopy": a run must not start or end
                     // with a number and must hold at least one word that says something.
                     guard w.count >= 3, w.count <= 64, !run.first!.allSatisfy(\.isNumber), !run.last!.allSatisfy(\.isNumber),
                           run.contains(where: { $0.count >= 3 && !stop.contains($0) && !$0.allSatisfy(\.isNumber) }),
