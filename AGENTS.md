@@ -17,6 +17,8 @@ relevant.
 | `client/Sources/ccsend/Transfer.swift` | Selection walk + filters (`Plan`), pax tar writer, shell escaping |
 | `client/Sources/ccsend/Inject.swift` | Typing the path into a Claude prompt: tmux and iTerm adapters |
 | `client/Sources/ccsend/Import.swift` | Unpacking an import stream from a host: the untrusted-archive rules live here |
+| `client/Sources/ccsend/Guess.swift` | Destination guessing from file names (words, session match, folder ranking); the host walk is `guess` in remote.py |
+| `client/Sources/ccsend/TermPicker.swift` | CLI destination picker: fzf via posix_spawn (not `Process`: own process group, fzf gets SIGTTIN), numbered-list fallback |
 | `client/Sources/ccsend/Install.swift` | Generates `~/Library/Services/*.workflow` and `finder-menu.json` from the config |
 | `client/Finder/` | Sandboxed Finder Sync extension (Desktop/folder-background menu), built with swiftc by make |
 | `client/Sources/ccsend/UI/` | Window: `Model.swift` (state, SSH work off the main thread), `SendView.swift` |

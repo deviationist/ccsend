@@ -74,6 +74,18 @@ enum Guess {
         return rel.split(separator: "/").map { norm(String($0)) }.filter(words.contains).max { $0.count < $1.count }
     }
 
+    /// The session working in a matching folder (or below one): the longest
+    /// word, Claude before a shell, then the earliest in `sessions` (newest first).
+    static func session(_ sessions: [Remote.Session], home: String, words: Set<String>) -> Remote.Session? {
+        var best: (s: Remote.Session, score: Int)?
+        for s in sessions {
+            guard let w = match(s.cwd, home: home, words: words) else { continue }
+            let score = w.count * 2 + (s.kind == .claude ? 1 : 0)
+            if score > best?.score ?? 0 { best = (s, score) }
+        }
+        return best?.s
+    }
+
     struct Folder: Equatable { let path: String; let word: String; let depth: Int; let mtime: Date }
 
     /// The folder to suggest: the longest (most specific) word, then the

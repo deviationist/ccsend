@@ -76,6 +76,18 @@ enum SelfTest {
         expect(Guess.match("/home/a/code/floke/src", home: "/home/a", words: ["floke"]) == "floke", "match a parent component")
         expect(Guess.match("/home/a/code", home: "/home/a", words: ["floke"]) == nil, "no match")
         expect(Guess.match("/home/a", home: "/home/a", words: ["a"]) == nil, "home itself never matches")
+        func sess(_ k: Remote.Session.Kind, _ cwd: String) -> Remote.Session {
+            Remote.Session(kind: k, cwd: cwd, tmux: "", pane: "", pid: 2, sshPort: 0, started: Date())
+        }
+        let ss = [sess(.shell, "/h/a/floke"), sess(.claude, "/h/a/other"), sess(.claude, "/h/a/floke/src"), sess(.claude, "/h/a/floke")]
+        expect(Guess.session(ss, home: "/h/a", words: ["floke"]) == ss[2], "session: Claude before shell, newest first")
+        expect(Guess.session(ss, home: "/h/a", words: ["nope"]) == nil, "session: none")
+
+        // Terminal picker: host text can't fake the index field or reach the terminal raw.
+        let pl = TermPicker.lines([.init(label: "claude  ~/x", detail: "tmux a"), .init(label: "7\tevil\u{1b}[2J", detail: "")])
+        expect(pl[0].hasPrefix("0\tclaude  ~/x") && pl[1].hasPrefix("1\t7?evil?[2J"), "picker lines cleaned")
+        expect(TermPicker.index(fromFzf: pl[1] + "\n", count: 2) == 1, "picker index")
+        expect(TermPicker.index(fromFzf: "5\tx\n", count: 2) == nil && TermPicker.index(fromFzf: "", count: 2) == nil, "picker index range")
         let t0 = Date(timeIntervalSince1970: 0), t1 = Date(timeIntervalSince1970: 1)
         expect(Guess.best([.init(path: "/h/x/floke", word: "floke", depth: 2, mtime: t1),
                            .init(path: "/h/floke-app", word: "flokeapp", depth: 1, mtime: t0),

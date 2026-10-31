@@ -184,15 +184,10 @@ final class SendModel: ObservableObject {
         let words = Guess.words(files.map { ($0 as NSString).lastPathComponent })
         guard !words.isEmpty else { return }
         let set = Set(words), home = discovery?.home ?? ""
-        var best: (id: String, label: String, score: Int)?
-        for d in destinations {          // newest first, so ties keep the newest
-            guard case .session(let s) = d.kind, let w = Guess.match(s.cwd, home: home, words: set) else { continue }
-            let score = w.count * 2 + (s.kind == .claude ? 1 : 0)
-            if score > best?.score ?? 0 { best = (d.id, (s.kind == .claude ? "Claude in " : "shell in ") + tilde(s.cwd), score) }
-        }
-        if let b = best {
-            setSelected(b.id)
-            notice = "Guessed from the file name: \(b.label)."
+        let shown = destinations.compactMap { d -> Remote.Session? in if case .session(let s) = d.kind { return s } else { return nil } }
+        if let s = Guess.session(shown, home: home, words: set) {
+            setSelected(Destination(kind: .session(s)).id)
+            notice = "Guessed from the file name: " + (s.kind == .claude ? "Claude in " : "shell in ") + tilde(s.cwd) + "."
             return
         }
         guard host.customPath else { return }

@@ -4,9 +4,11 @@ let usage = """
 usage:
   ccsend ui [--host HOST] [--] FILE...        the send window (what the Quick Actions run)
   ccsend ui-import --host HOST [--to DIR | --finder] [-- ITEM...]   the import window
-  ccsend send HOST DEST [options] FILE...      send without a window
+  ccsend send [options] HOST [DEST] FILE...    send without a window
         DEST: claude (newest Claude session) | claude:DIR (the Claude session in DIR)
               shell (newest SSH shell) | shell:DIR | default | /path | ~/path
+              guess (a session or folder named like the files) | pick (choose, with fzf if installed)
+              With one FILE and no DEST, or with -- before the files, you choose at the terminal.
         --hidden      include hidden files in folders
         --all         do not apply the exclude list
         --yes         send even when over the configured limits
@@ -50,12 +52,17 @@ func describe(_ p: Plan) -> String {
 func cmdSend(_ args: [String]) throws {
     var rest = args, opts: Set<String> = []
     while let a = rest.first, ["--hidden", "--all", "--yes", "--no-inject", "--trash"].contains(a) { opts.insert(a); rest.removeFirst() }
-    guard rest.count >= 3 else { fail(usage) }
+    guard rest.count >= 2 else { fail(usage) }
     let config = try Config.load()
     let host = try config.host(rest[0])
-    let dest = rest[1]
+    var dest = rest[1]
     var files = Array(rest.dropFirst(2))
-    if files.first == "--" { files.removeFirst() }
+    if dest == "--" || files.isEmpty {
+        // HOST FILE or HOST -- FILE...: no destination given, so choose one.
+        files = dest == "--" ? files : [dest]
+        dest = "pick"
+    } else if files.first == "--" { files.removeFirst() }
+    guard !files.isEmpty else { fail(usage) }
     let flags = Array(files.filter { $0.hasPrefix("--") })
     if !flags.isEmpty { fail("options go before HOST: \(flags.joined(separator: " "))") }
 
@@ -73,6 +80,9 @@ func cmdSend(_ args: [String]) throws {
     let ssh = SSH(host: host, controlPath: nil)
     var dir = dest, create = false, target: Remote.Session?
     switch dest {
+    case "pick", "guess":
+        let c = try chooseDestination(config: config, host: host, ssh: ssh, files: files, plan: plan, pick: dest == "pick")
+        (dir, create, target) = (c.dir, c.create, c.target)
     case let d where d == "claude" || d == "shell" || d.hasPrefix("claude:") || d.hasPrefix("shell:"):
         // kind, or kind:DIR to pick exactly one session by its working directory.
         let parts = d.split(separator: ":", maxSplits: 1).map(String.init)
@@ -97,7 +107,7 @@ func cmdSend(_ args: [String]) throws {
         dir = host.defaultLocation
         create = true
     default:
-        guard dest.hasPrefix("/") || dest.hasPrefix("~/") || dest == "~" else { fail("DEST must be claude, shell, default or a path") }
+        guard dest.hasPrefix("/") || dest.hasPrefix("~/") || dest == "~" else { fail("DEST must be claude, shell, default, guess, pick or a path") }
     }
     let r = try Sender.send(plan, to: dir, create: create, via: ssh)
     if config.copyPath { Sender.copyToClipboard(r.clipboard) }
@@ -119,6 +129,76 @@ func cmdSend(_ args: [String]) throws {
                 print("not typed into Claude: \(error)" + onClipboard)
             }
         }
+    }
+}
+
+/// DEST "pick" (choose at the terminal) and "guess" (the best guess, no questions).
+/// The guessed entry comes first in the picker, like the window's preselection.
+func chooseDestination(config: Config, host: HostConfig, ssh: SSH, files: [String], plan: Plan, pick: Bool) throws
+    -> (dir: String, create: Bool, target: Remote.Session?) {
+    if pick && !TermPicker.interactive {
+        fail("no DEST given and not at a terminal; use claude, shell, default, guess or a path")
+    }
+    let disc = host.claudeSessions || host.sshSessions ? try Remote.discover(ssh) : nil
+    let home = disc?.home ?? ""
+    let sessions = (disc?.sessions ?? []).filter { $0.kind == .claude ? host.claudeSessions : host.sshSessions }
+    func tilde(_ p: String) -> String { Display.tilde(p, home: home) }
+
+    var guessedSession: Remote.Session?, guessedFolder: Guess.Folder?, others = 0
+    let words = Guess.words(files.map { ($0 as NSString).lastPathComponent })
+    if (config.guessDestination || !pick) && !words.isEmpty {
+        guessedSession = Guess.session(sessions, home: home, words: Set(words))
+        if guessedSession == nil && (host.customPath || !pick) {
+            let found = try Remote.guess(ssh, words: words, excludes: config.excludes)
+            guessedFolder = Guess.best(found)
+            others = max(found.count - 1, 0)
+        }
+    }
+
+    if !pick {
+        if let s = guessedSession {
+            print("guessed: \(s.kind.rawValue) session in \(Display.clean(tilde(s.cwd)))")
+            return (s.cwd, false, s)
+        }
+        if let f = guessedFolder {
+            print("guessed: \(Display.clean(tilde(f.path)))" + (others > 0 ? " (\(others) other matching folder(s))" : ""))
+            return (f.path, false, nil)
+        }
+        fail(words.isEmpty ? "nothing to guess from in these names (only numbers or generic words)"
+                           : "no session or folder on \(host.label) is named like \(words.prefix(3).joined(separator: ", "))")
+    }
+
+    enum Choice { case session(Remote.Session), folder(String), defaultLocation, typePath }
+    var choices: [(Choice, TermPicker.Item)] = []
+    func sessionItem(_ s: Remote.Session, guessed: Bool) -> TermPicker.Item {
+        let where_ = [s.tmux.isEmpty ? (s.kind == .shell ? "SSH session" : "") : "tmux \(s.tmux)", stamp(s.started),
+                      guessed ? "guessed from the file name" : ""].filter { !$0.isEmpty }
+        return .init(label: s.kind.rawValue.padding(toLength: 8, withPad: " ", startingAt: 0) + tilde(s.cwd),
+                     detail: where_.joined(separator: " · "))
+    }
+    if let s = guessedSession { choices.append((.session(s), sessionItem(s, guessed: true))) }
+    if let f = guessedFolder {
+        choices.append((.folder(f.path), .init(label: "path    " + tilde(f.path),
+                                               detail: "guessed from the file name" + (others > 0 ? " · \(others) other match(es)" : ""))))
+    }
+    for s in sessions where s != guessedSession { choices.append((.session(s), sessionItem(s, guessed: false))) }
+    if !host.defaultLocation.isEmpty {
+        choices.append((.defaultLocation, .init(label: "default " + host.defaultLocation, detail: "created if missing")))
+    }
+    if host.customPath { choices.append((.typePath, .init(label: "path    type a path…", detail: ""))) }
+    guard !choices.isEmpty else { fail("no destinations on \(host.label): no sessions, and default_location and custom_path are off") }
+
+    let names = files.map { ($0 as NSString).lastPathComponent }
+    let header = names.count <= 3 ? names.joined(separator: ", ") : "\(names.count) items: " + names.prefix(3).joined(separator: ", ") + ", …"
+    guard let i = try TermPicker.choose(choices.map(\.1), prompt: "send to \(host.label)>", header: header) else { fail("cancelled") }
+    switch choices[i].0 {
+    case .session(let s): return (s.cwd, false, s)
+    case .folder(let p): return (p, false, nil)
+    case .defaultLocation: return (host.defaultLocation, true, nil)
+    case .typePath:
+        guard let p = TermPicker.ask("path on \(host.label) (/… or ~/…):"), !p.isEmpty else { fail("cancelled") }
+        guard p.hasPrefix("/") || p.hasPrefix("~/") || p == "~" else { fail("paths start with / or ~/") }
+        return (p, false, nil)
     }
 }
 

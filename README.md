@@ -132,6 +132,9 @@ Target one session exactly from the CLI with `claude:DIR`:
 ccsend send devbox claude ~/Desktop/shot.png    # newest Claude session; also: claude:DIR | shell | shell:DIR | default | /path
 ccsend send --hidden --all devbox default ~/proj   # include hidden files, skip the exclude list (--yes: over limits, --no-inject)
 ccsend send --trash devbox claude ~/Downloads/IMG_0042.PNG   # then move the original to the Trash
+ccsend send devbox ~/Downloads/Floke-6.zip         # no DEST: choose at the terminal (fzf if installed), guess first
+ccsend send devbox -- a.png b.png                  # same, for several files; or DEST "pick"
+ccsend send devbox guess ~/Downloads/Floke-6.zip   # send to the best guess without asking
 ccsend import devbox --to ~/Downloads ~/myapp/report ~/myapp/notes.md   # same parent folder; --hidden --all --links --yes
 ccsend sessions devbox
 ccsend log                                       # Mac log
