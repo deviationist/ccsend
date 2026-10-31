@@ -100,7 +100,8 @@ func cmdSend(_ args: [String]) throws {
         guard dest.hasPrefix("/") || dest.hasPrefix("~/") || dest == "~" else { fail("DEST must be claude, shell, default or a path") }
     }
     let r = try Sender.send(plan, to: dir, create: create, via: ssh)
-    Sender.copyToClipboard(r.clipboard)
+    if config.copyPath { Sender.copyToClipboard(r.clipboard) }
+    let onClipboard = config.copyPath ? " (path is on the clipboard)" : ""
     print("sent to \(host.label):\(r.dir)")
     print(r.clipboard)
     if opts.contains("--trash") {
@@ -109,13 +110,13 @@ func cmdSend(_ args: [String]) throws {
     }
     if let s = target, s.kind == .claude, host.inject != .off, !opts.contains("--no-inject") {
         if Injector.adapter(for: s, host: host) == nil {
-            print("not typed into Claude: no adapter in inject_via fits that session (path is on the clipboard)")
+            print("not typed into Claude: no adapter in inject_via fits that session" + onClipboard)
         } else {
             do {
                 let via = try Injector.inject(ssh, into: s, text: r.clipboard + " ")
                 print((host.inject == .submit ? "typed into Claude and submitted" : "typed into the Claude prompt") + " via \(via.rawValue)")
             } catch {
-                print("not typed into Claude: \(error) (path is on the clipboard)")
+                print("not typed into Claude: \(error)" + onClipboard)
             }
         }
     }

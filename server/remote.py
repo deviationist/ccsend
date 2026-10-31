@@ -29,6 +29,13 @@ Requests
         Confirm process P is still your claude, in the foreground of the SSH
         terminal whose client port is N. The client asks right before typing
         into that terminal from the Mac (the iTerm adapter).
+    {"cmd": "guess", "words": [W...], "roots": [R...], "excludes": [G...]}
+        Folders under the roots whose name, lowercased with everything but
+        letters and digits removed, equals one of the words (the client
+        derives them from the names being sent). Breadth first, at most
+        GUESS_DEPTH levels below each root, hidden folders and names matching
+        an excludes glob skipped, links never followed, bounded in folders
+        visited and time. Read-only.
     {"cmd": "browse", "dir": D, "roots": [R...], "hidden": bool}
         Entries of D (name, kind file|dir|link|other, size, mtime) for the
         import window. D must resolve inside a root.
@@ -245,6 +252,60 @@ def list_dir(req):
         if len(entries) >= MAX_LIST:
             break
     return {"dir": d, "entries": entries, "truncated": len(entries) >= MAX_LIST}
+
+
+# ---------------------------------------------------------------- guess
+
+GUESS_DEPTH = 4
+GUESS_MAX_DIRS = 20000
+GUESS_SECONDS = 2.0
+GUESS_MAX_MATCHES = 20
+WORD_RE = re.compile(r"^[a-z0-9]{3,64}$")
+
+
+def norm(name):
+    return re.sub(r"[^a-z0-9]", "", name.lower())
+
+
+def guess(req):
+    import fnmatch
+    words = req.get("words")
+    if not isinstance(words, list) or not 0 < len(words) <= 64 or not all(isinstance(w, str) and WORD_RE.match(w) for w in words):
+        raise Refused("invalid words")
+    excludes = req.get("excludes", [])
+    if not isinstance(excludes, list) or not all(isinstance(g, str) for g in excludes):
+        raise Refused("invalid excludes")
+    words = set(words)
+    deadline = time.monotonic() + GUESS_SECONDS
+    matches, seen, visited, complete = [], set(), 0, True
+    queue = [(r, 0) for r in roots_of(req) if os.path.isdir(r)]
+    while queue:
+        d, depth = queue.pop(0)
+        if d in seen:
+            continue
+        seen.add(d)
+        visited += 1
+        if visited > GUESS_MAX_DIRS or time.monotonic() > deadline:
+            complete = False
+            break
+        try:
+            with os.scandir(d) as it:
+                subs = sorted((e for e in it if e.is_dir(follow_symlinks=False)), key=lambda e: e.name)
+        except OSError:
+            continue
+        for e in subs:
+            n = e.name
+            if n.startswith(".") or any(fnmatch.fnmatchcase(n, g) for g in excludes):
+                continue
+            if norm(n) in words and len(matches) < GUESS_MAX_MATCHES:
+                try:
+                    mtime = int(e.stat(follow_symlinks=False).st_mtime)
+                except OSError:
+                    mtime = 0
+                matches.append({"path": e.path, "word": norm(n), "depth": depth + 1, "mtime": mtime})
+            if depth + 1 < GUESS_DEPTH:
+                queue.append((e.path, depth + 1))
+    return {"matches": matches, "visited": visited, "complete": complete}
 
 
 # ---------------------------------------------------------------- browse / download
@@ -572,7 +633,8 @@ def receive(target, tops, written, order):
 # ---------------------------------------------------------------- main
 
 COMMANDS = {"discover": discover, "resolve": resolve, "list": list_dir, "upload": upload, "inject": inject,
-            "foreground": foreground, "browse": browse, "download": download}
+            "foreground": foreground, "browse": browse, "download": download,
+            "guess": guess}
 
 
 ID_RE = re.compile(r"^[A-Za-z0-9-]{1,64}$")
@@ -614,6 +676,8 @@ def log(req, out):
                       ("dry_run", not out.get("streamed", False)), ("skipped_links", out["skipped_links"])]
             if req.get("log_names", True) is not False:
                 parts.append(("names", out["tops"]))
+        if "matches" in out:
+            parts += [("matches", len(out["matches"])), ("visited", out["visited"])]
         if "pane" in out:
             parts += [("pane", out["pane"]), ("submitted", out["submitted"])]
     else:

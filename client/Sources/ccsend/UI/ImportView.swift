@@ -217,14 +217,15 @@ struct ImportView: View {
                 Text(verbatim: "Importing…").foregroundStyle(.secondary)
             case .done:
                 Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
-                Text(verbatim: model.dest.hasSuffix("/Desktop") ? "Imported to the Desktop." : "Imported. Showing in Finder.").lineLimit(1)
+                Text(verbatim: model.dest.hasSuffix("/Desktop") ? "Imported to the Desktop."
+                     : model.config.revealImports ? "Imported. Showing in Finder." : "Imported to \(model.localDestLabel).").lineLimit(1)
             default:
                 EmptyView()
             }
             Spacer()
-            Button("Cancel") { NSApp.terminate(nil) }
+            Button(model.phase == .done ? "Close" : "Cancel") { NSApp.terminate(nil) }
                 .keyboardShortcut(.cancelAction)
-                .disabled(model.phase == .importing || model.phase == .done)
+                .disabled(model.phase == .importing || model.phase == .done && model.config.closeWhenDone)
             Button(model.overLimit && model.overLimitConfirmed ? "Import anyway" : "Import") { model.start() }
                 .keyboardShortcut(.defaultAction)
                 .disabled(!model.canImport)

@@ -71,7 +71,7 @@ final class SendModel: ObservableObject {
     @Published var progress: Double = 0
     @Published var result: SendResult?
     @Published var injectOn = true          // the per-send checkbox; only shown when the host opted in
-    @Published var trashAfter = false       // "Move to Trash after sending": unticked every time, never remembered
+    @Published var trashAfter: Bool         // "Move to Trash after sending": ui.trash_after_send, never remembered
     @Published var doneMessage = ""
 
     private var ssh: SSH?
@@ -87,6 +87,7 @@ final class SendModel: ObservableObject {
         self.host = host
         includeHidden = config.includeHidden
         applyExcludes = config.applyExcludes
+        trashAfter = config.trashAfterSend
         replan()
         connect()
     }
@@ -117,6 +118,7 @@ final class SendModel: ObservableObject {
                     self.buildDestinations()
                     self.phase = .ready
                     self.startTimer()
+                    self.guessDestination()
                 }
             } catch {
                 DispatchQueue.main.async {
@@ -168,6 +170,44 @@ final class SendModel: ObservableObject {
             setSelected(d.first(where: { $0.kind == .defaultLocation })?.id)
         case .none:
             break
+        }
+    }
+
+    // MARK: guessing from the file name
+
+    /// ui.guess_destination: prefer a session already in a folder named like the
+    /// file ("Floke-6.zip" -> a session in ~/code/floke), else ask the host for
+    /// such a folder under allowed_roots and put it in the path field. Never
+    /// overrides a destination the user picked.
+    private func guessDestination() {
+        guard config.guessDestination, !userChose, let ssh else { return }
+        let words = Guess.words(files.map { ($0 as NSString).lastPathComponent })
+        guard !words.isEmpty else { return }
+        let set = Set(words), home = discovery?.home ?? ""
+        var best: (id: String, label: String, score: Int)?
+        for d in destinations {          // newest first, so ties keep the newest
+            guard case .session(let s) = d.kind, let w = Guess.match(s.cwd, home: home, words: set) else { continue }
+            let score = w.count * 2 + (s.kind == .claude ? 1 : 0)
+            if score > best?.score ?? 0 { best = (d.id, (s.kind == .claude ? "Claude in " : "shell in ") + tilde(s.cwd), score) }
+        }
+        if let b = best {
+            setSelected(b.id)
+            notice = "Guessed from the file name: \(b.label)."
+            return
+        }
+        guard host.customPath else { return }
+        let gen = generation, excludes = config.excludes
+        work.async {
+            let found = (try? Remote.guess(ssh, words: words, excludes: excludes)) ?? []
+            DispatchQueue.main.async {
+                guard gen == self.generation, self.phase == .ready, !self.userChose, let f = Guess.best(found) else { return }
+                self.path = self.tilde(f.path) + "/"
+                self.candidates = []
+                self.setSelected("path")
+                let others = found.count - 1
+                self.notice = "Guessed from the file name: \(self.tilde(f.path))"
+                    + (others > 0 ? " (\(others) other matching folder\(others == 1 ? "" : "s"))." : ".")
+            }
         }
     }
 
@@ -306,14 +346,16 @@ final class SendModel: ObservableObject {
                     lastTick = Date()
                     DispatchQueue.main.async { self.progress = min(Double(sent) / total, 1) }
                 }
-                var message = "Sent. Path copied to the clipboard."
+                let copy = self.config.copyPath
+                var message = copy ? "Sent. Path copied to the clipboard." : "Sent."
                 if let s = injectInto {
                     do {
                         _ = try Injector.inject(ssh, into: s, text: r.clipboard + " ")
-                        message = submit ? "Sent, typed into Claude and submitted. Also copied."
-                                         : "Sent and typed into the Claude prompt. Also copied."
+                        message = (submit ? "Sent, typed into Claude and submitted." : "Sent and typed into the Claude prompt.")
+                            + (copy ? " Also copied." : "")
                     } catch {
-                        message = "Sent. Path copied, but typing into Claude failed: " + Display.sentence("\(error)")
+                        message = (copy ? "Sent. Path copied, but typing" : "Sent, but typing") + " into Claude failed: "
+                            + Display.sentence("\(error)")
                     }
                 }
                 if !trashThese.isEmpty {
@@ -322,12 +364,12 @@ final class SendModel: ObservableObject {
                                               : " Could not move to the Trash: " + failed.joined(separator: ", ") + "."
                 }
                 DispatchQueue.main.async {
-                    Sender.copyToClipboard(r.clipboard)
+                    if copy { Sender.copyToClipboard(r.clipboard) }
                     self.doneMessage = message
                     self.result = r
                     self.progress = 1
                     self.phase = .done
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) { NSApp.terminate(nil) }
+                    if self.config.closeWhenDone { DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) { NSApp.terminate(nil) } }
                 }
             } catch {
                 DispatchQueue.main.async {

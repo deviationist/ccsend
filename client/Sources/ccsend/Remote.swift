@@ -122,6 +122,20 @@ enum Remote {
         return (d, out)
     }
 
+    /// Folders under the host's allowed roots named like one of `words` (Guess.words).
+    static func guess(_ ssh: SSH, words: [String], excludes: [String]) throws -> [Guess.Folder] {
+        let o = try call(ssh, ["cmd": "guess", "words": words, "roots": ssh.host.allowedRoots, "excludes": excludes], timeout: 15)
+        let wanted = Set(words)
+        var out: [Guess.Folder] = []
+        for m in (o["matches"] as? [[String: Any]] ?? []).prefix(20) {
+            guard let p = m["path"] as? String, Check.path(p), let w = m["word"] as? String, wanted.contains(w),
+                  Guess.norm((p as NSString).lastPathComponent) == w,
+                  let d = m["depth"] as? Int, (1...8).contains(d) else { continue }
+            out.append(Guess.Folder(path: p, word: w, depth: d, mtime: Date(timeIntervalSince1970: TimeInterval(m["mtime"] as? Int ?? 0))))
+        }
+        return out
+    }
+
     /// Paste text into the Claude session's tmux pane (the host re-checks the pane runs that claude).
     static func inject(_ ssh: SSH, into s: Session, text: String, submit: Bool) throws {
         guard s.kind == .claude, !s.pane.isEmpty, s.pid > 1 else { throw RemoteError("this session is not in tmux") }

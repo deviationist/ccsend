@@ -233,10 +233,11 @@ final class ImportModel: ObservableObject {
                     self.phase = .done
                     // The Desktop already shows them; elsewhere, open Finder on the imported items.
                     let desktop = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Desktop").path
-                    if URL(fileURLWithPath: dest).resolvingSymlinksInPath().path != URL(fileURLWithPath: desktop).resolvingSymlinksInPath().path {
+                    if self.config.revealImports,
+                       URL(fileURLWithPath: dest).resolvingSymlinksInPath().path != URL(fileURLWithPath: desktop).resolvingSymlinksInPath().path {
                         NSWorkspace.shared.activateFileViewerSelecting(paths.map { URL(fileURLWithPath: $0) })
                     }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) { NSApp.terminate(nil) }
+                    if self.config.closeWhenDone { DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) { NSApp.terminate(nil) } }
                 }
             } catch {
                 DispatchQueue.main.async {

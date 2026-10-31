@@ -133,6 +133,14 @@ All arguments arrive as one base64 JSON object. Output is JSON lines.
   the Claude entries).
 - `list {dir, prefix}` → up to 200 entries `{name, dir: bool}` for Tab
   completion. Confined to `allowed_roots`.
+- `guess {words, roots=allowed_roots, excludes}` (`ui.guess_destination`) →
+  up to 20 folders `{path, word, depth, mtime}` whose name, reduced to
+  lowercase letters and digits, equals a word. Words are `[a-z0-9]{3,64}`,
+  at most 64, derived on the Mac from the names being sent. Read-only:
+  breadth first, at most 4 levels below each root, links not followed,
+  hidden and excluded folders skipped, capped at 20 000 folders and 2 s. The
+  Mac only preselects the result in the path field; the upload re-checks it
+  against `allowed_roots` like any typed path.
 - `inject {pane, pid, text, submit}` (opt-in, `inject` per host) pastes the
   shell-escaped remote paths into the tmux pane of a Claude session as a
   bracketed paste, and presses Enter only with `inject = "submit"`. Refused

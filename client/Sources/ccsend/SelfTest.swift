@@ -55,6 +55,33 @@ enum SelfTest {
         expect((try? Config.parse(host))?.hosts[0].inject == .off, "inject is off unless enabled")
         expect((try? Config.parse(host + "inject = \"type\"\n"))?.hosts[0].inject == .type, "inject type")
         expect((try? Config.parse("[ui]\nrefresh_seconds = 0\n" + host))?.refreshSeconds == 0, "refresh off")
+        expect((try? Config.parse(host))?.trashAfterSend == true, "trash after send on by default")
+        expect((try? Config.parse("[ui]\ntrash_after_send = false\n" + host))?.trashAfterSend == false, "trash after send off")
+        rejects("[ui]\ntrash_after_send = \"yes\"\n" + host, "trash_after_send not a bool")
+        if let d = try? Config.parse(host) {
+            expect(d.guessDestination && d.closeWhenDone && d.copyPath && d.revealImports, "ui behaviour defaults")
+        }
+        if let o = try? Config.parse("[ui]\nguess_destination = false\nclose_when_done = false\ncopy_path = false\nreveal_imports = false\n" + host) {
+            expect(!o.guessDestination && !o.closeWhenDone && !o.copyPath && !o.revealImports, "ui behaviour off")
+        } else { expect(false, "ui behaviour keys refused") }
+
+        // Guessing the destination from the file name.
+        expect(Guess.tokens("Floke-6.zip") == ["floke", "6"], "tokens: dash and digits")
+        expect(Guess.tokens("FlokeApp_v2.tar.gz") == ["floke", "app", "v", "2"], "tokens: camelCase and .tar.gz")
+        expect(Guess.words(["Floke-6.zip"]) == ["floke"], "words: digits dropped")
+        expect(Guess.words(["floke-app-v2.tar.gz"]) == ["floke", "flokeapp", "flokeappv"], "words: joined runs")
+        expect(Guess.words(["web3-site.zip"]).contains("web3site"), "words: digits inside a run are kept")
+        expect(Guess.words(["Screenshot 2026-01-01 at 12.00.00.png", "IMG_0042.PNG", "final copy.pdf"]).isEmpty, "words: generic names give nothing")
+        expect(Guess.norm("Floke_App") == "flokeapp" && Guess.norm("Ølfloke") == "lfloke", "norm")
+        expect(Guess.match("/home/a/code/floke/src", home: "/home/a", words: ["floke"]) == "floke", "match a parent component")
+        expect(Guess.match("/home/a/code", home: "/home/a", words: ["floke"]) == nil, "no match")
+        expect(Guess.match("/home/a", home: "/home/a", words: ["a"]) == nil, "home itself never matches")
+        let t0 = Date(timeIntervalSince1970: 0), t1 = Date(timeIntervalSince1970: 1)
+        expect(Guess.best([.init(path: "/h/x/floke", word: "floke", depth: 2, mtime: t1),
+                           .init(path: "/h/floke-app", word: "flokeapp", depth: 1, mtime: t0),
+                           .init(path: "/h/floke", word: "floke", depth: 1, mtime: t0)])?.path == "/h/floke-app", "best: longest word")
+        expect(Guess.best([.init(path: "/h/x/floke", word: "floke", depth: 2, mtime: t1),
+                           .init(path: "/h/floke", word: "floke", depth: 1, mtime: t0)])?.path == "/h/floke", "best: shallowest")
         rejects(host + "label = \"a\nb\"\n", "unterminated string")
 
         // Hardened ssh options come before anything configurable (OpenSSH keeps the first value).

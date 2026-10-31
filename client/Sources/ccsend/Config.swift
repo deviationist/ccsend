@@ -198,6 +198,11 @@ struct Config {
     var menu = MenuMode.perHost
     var preselect = Preselect.newestClaude
     var refreshSeconds = 15
+    var trashAfterSend = true           // default of the "Move to Trash after sending" checkbox
+    var guessDestination = true         // preselect a folder named like the file being sent
+    var closeWhenDone = true            // close the window 1.4 s after a send or import
+    var copyPath = true                 // put the sent path on the clipboard
+    var revealImports = true            // show imported items in Finder (not for the Desktop)
     var includeHidden = false
     var applyExcludes = true
     var excludes = ["node_modules", ".venv", "venv", "__pycache__", ".pytest_cache", ".mypy_cache",
@@ -285,6 +290,11 @@ struct Config {
                     }
                     c.refreshSeconds = n
                 }
+                if let b = try bool("trash_after_send") { c.trashAfterSend = b }
+                if let b = try bool("guess_destination") { c.guessDestination = b }
+                if let b = try bool("close_when_done") { c.closeWhenDone = b }
+                if let b = try bool("copy_path") { c.copyPath = b }
+                if let b = try bool("reveal_imports") { c.revealImports = b }
             case "folders":
                 if let b = try bool("include_hidden") { c.includeHidden = b }
                 if let b = try bool("apply_excludes") { c.applyExcludes = b }
@@ -376,6 +386,11 @@ struct Config {
         menu = "per-host"            # "per-host": one Quick Action per host | "single": one "Send to remote"
         preselect = "newest-claude"  # "newest-claude" | "default-location" | "none"
         refresh_seconds = 15         # re-read the host's sessions while the window is open; 0 = off
+        trash_after_send = true      # default of "Move the originals to the Trash after sending" (never deletes)
+        guess_destination = true     # preselect a session or folder named like the file ("Floke-6.zip" -> ~/code/floke)
+        close_when_done = true       # close the window shortly after a send or import; false: stay open
+        copy_path = true             # put the sent path on the clipboard
+        reveal_imports = true        # show imported items in Finder (never for the Desktop)
 
         [folders]
         include_hidden = false       # default of the "Include hidden files" checkbox

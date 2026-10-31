@@ -211,18 +211,19 @@ struct SendView: View {
                 .disabled(model.phase == .sending || model.phase == .done)
             } else {
                 Label { Text(verbatim: "No inject adapter fits this Claude session (inject_via: "
-                             + model.host.injectVia.map(\.rawValue).joined(separator: ", ") + "), so the path will only be copied.") }
+                             + model.host.injectVia.map(\.rawValue).joined(separator: ", ") + ")"
+                             + (model.config.copyPath ? ", so the path will only be copied." : ".")) }
                     icon: { Image(systemName: "info.circle") }
                     .font(.callout).foregroundStyle(.secondary)
             }
         }
     }
 
-    /// Opt-in per send; disabled when filters left files out, since trashing would lose them.
+    /// On by default, per send; off and disabled when filters left files out, since trashing would lose them.
     @ViewBuilder private var trashOption: some View {
         let everything = model.plan?.sendsEverything ?? true
         VStack(alignment: .leading, spacing: 2) {
-            Toggle(isOn: $model.trashAfter) {
+            Toggle(isOn: Binding(get: { model.trashAfter && everything }, set: { model.trashAfter = $0 })) {
                 Text(verbatim: model.files.count == 1 ? "Move the original to the Trash after sending"
                                                       : "Move the originals to the Trash after sending")
             }
@@ -233,7 +234,6 @@ struct SendView: View {
                     .font(.caption).foregroundStyle(.secondary).padding(.leading, 20)
             }
         }
-        .onChange(of: everything) { _, ok in if !ok { model.trashAfter = false } }
     }
 
     private var folderSection: some View {
@@ -282,14 +282,14 @@ struct SendView: View {
                 Text(verbatim: "Sending…").foregroundStyle(.secondary)
             case .done:
                 Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
-                Text(verbatim: model.doneMessage).lineLimit(2)
+                Text(verbatim: model.doneMessage).lineLimit(model.config.closeWhenDone ? 2 : 4).textSelection(.enabled)
             default:
                 EmptyView()
             }
             Spacer()
-            Button("Cancel") { NSApp.terminate(nil) }
+            Button(model.phase == .done ? "Close" : "Cancel") { NSApp.terminate(nil) }
                 .keyboardShortcut(.cancelAction)
-                .disabled(model.phase == .sending || model.phase == .done)
+                .disabled(model.phase == .sending || model.phase == .done && model.config.closeWhenDone)
             Button(model.overLimit && model.overLimitConfirmed ? "Send anyway" : "Send") { model.send() }
                 .keyboardShortcut(.defaultAction)
                 .disabled(!model.canSend)

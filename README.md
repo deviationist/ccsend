@@ -13,14 +13,20 @@ nothing listens on the Mac, and the host holds no credential.
 1. Select files or folders in Finder → right-click → Quick Actions → **Send to &lt;host&gt;**.
 2. A window lists the host's Claude Code sessions and SSH shells (refreshed
    every 15 s), plus the default location and a path field.
+   With `guess_destination` on, a name like `Floke-6.zip` preselects a session
+   working in a folder named `floke` (any case, `-`/`_` ignored), or else a
+   folder the host finds with that name under `allowed_roots` (up to 4 levels
+   deep, hidden and excluded folders skipped), put in the path field. A note
+   says it was guessed. Generic words (screenshot, img, final, copy, …) and
+   numbers never match, and a destination you pick yourself is never changed.
 3. Pick one and press Send. The files are streamed over SSH. Names that already
    exist get `-1`, `-2`, and so on, so nothing is ever overwritten.
-4. Optional, per send: **Move the originals to the Trash after sending**. It is
-   unticked every time, runs only after the host confirms everything arrived,
-   and is unavailable when folder filters skip files (they would be lost). The
-   Trash's Put Back restores them.
+4. **Move the originals to the Trash after sending** is ticked by default
+   (`ui.trash_after_send`); untick it per send to keep them. It runs only after the host confirms everything
+   arrived, and is off and unavailable when folder filters skip files (they
+   would be lost). It never deletes: the Trash's Put Back restores them.
 5. The absolute remote path, for example `/home/alice/myapp/Screenshot\ 2026-01-01\ at\ 12.00.00.png`,
-   is on the clipboard.
+   is on the clipboard (`copy_path`).
 
 **Import (opt-in, `import = true` per host)** works the other way round:
 right-click the Desktop or empty space in a Finder window → **Import from &lt;host&gt;**.
@@ -61,6 +67,11 @@ Everything specific to your setup lives in `~/.config/ccsend/config.toml`
 menu = "per-host"            # one Quick Action per host, or "single" for one "Send to remote"
 preselect = "newest-claude"  # "newest-claude" | "default-location" | "none"
 refresh_seconds = 15         # 0 = off
+trash_after_send = true      # default of "Move the originals to the Trash after sending"
+guess_destination = true     # preselect a session or folder named like the file, see below
+close_when_done = true       # close the window shortly after a send or import; false: stay open
+copy_path = true             # put the sent path on the clipboard
+reveal_imports = true        # show imported items in Finder (never for the Desktop)
 
 [folders]
 include_hidden = false       # default of the "Include hidden files" checkbox
