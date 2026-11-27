@@ -129,6 +129,11 @@ enum SelfTest {
         expect(Log.value("a b\n\"c\"") == "\"a b\\n\\\"c\\\"\"", "log value quoted")
         expect(Log.names(["æ ø", "x"]) == "[\"æ ø\",\"x\"]", "log names")
 
+        // Times: zero-padded 24-hour whatever the locale's time style.
+        let early = Calendar.current.date(bySettingHour: 0, minute: 5, second: 9, of: Date())!
+        expect(stamp(early) == "00:05", "stamp pads the hour: \(stamp(early))")
+        expect(stamp(early, seconds: true) == "00:05:09", "stamp with seconds: \(stamp(early, seconds: true))")
+
         // Tar: a stream the system tar lists with exact names and link targets.
         tarRoundTrip()
         importChecks()

@@ -117,7 +117,7 @@ struct SendView: View {
                 Text(verbatim: "Destination on \(model.host.label)")
                 Spacer()
                 if let t = model.updatedAt {
-                    Text(verbatim: "Updated " + t.formatted(date: .omitted, time: .standard))
+                    Text(verbatim: "Updated " + stamp(t, seconds: true))
                         .font(.caption).foregroundStyle(.secondary).monospacedDigit()
                 }
                 Button { model.refresh() } label: {

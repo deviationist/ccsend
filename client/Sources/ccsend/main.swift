@@ -33,9 +33,13 @@ func fail(_ msg: String) -> Never {
     exit(1)
 }
 
-func stamp(_ d: Date) -> String {
+/// Every time ccsend shows: 24-hour and zero-padded (09:05), with the date only
+/// when it isn't today. A fixed pattern, not the locale's time style, which can
+/// drop the leading zero (9:05:12) or add AM/PM.
+func stamp(_ d: Date, seconds: Bool = false) -> String {
     let f = DateFormatter()
-    f.dateFormat = Calendar.current.isDateInToday(d) ? "HH:mm" : "d MMM HH:mm"
+    let time = seconds ? "HH:mm:ss" : "HH:mm"
+    f.dateFormat = Calendar.current.isDateInToday(d) ? time : "d MMM " + time
     return f.string(from: d)
 }
 
